@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CHAT FX — Foundry VTT 채팅 효과 매크로 생성기</title>
+<style>
+:root{
+  --ink:#171a22; --panel:#1f232e; --panel-2:#272c39; --line:#353b4b;
+  --text:#e6e3dc; --muted:#8e94a6; --gold:#d8b25a; --gold-2:#f0cf7d;
+  --paper:#efeae0; --paper-ink:#1e1a16; --danger:#c9553f;
+  --sans:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  --serif:"Nanum Myeongjo","Noto Serif KR","Palatino Linotype",Georgia,serif;
+  --mono:"JetBrains Mono","D2Coding","Consolas","SF Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+header{display:flex;align-items:baseline;gap:18px;padding:16px 26px 12px;border-bottom:1px solid var(--line)}
+header h1{margin:0;font-family:var(--serif);font-weight:700;letter-spacing:.06em;font-size:22px;color:var(--gold-2)}
+header h1 small{font-family:var(--sans);font-weight:400;font-size:12px;color:var(--muted);margin-left:10px}
+header .ver{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted)}
+main{display:grid;grid-template-columns:270px 1fr 400px;height:calc(100vh - 56px)}
+@media (max-width:1100px){main{grid-template-columns:230px 1fr;height:auto}.col-right{grid-column:1/-1}}
+@media (max-width:760px){main{grid-template-columns:1fr}}
+.col{padding:16px 18px;border-right:1px solid var(--line);overflow:auto}
+.col:last-child{border-right:0}
+.col-left,.col-right{background:var(--panel)}
+h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px;font-weight:600}
+h2:first-child{margin-top:0}
+h2 span{text-transform:none;letter-spacing:0;font-weight:400}
+.preset-group .g{font-family:var(--serif);font-size:12px;color:var(--gold);margin:10px 0 4px;letter-spacing:.08em}
+.preset{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:transparent;border:1px solid transparent;color:var(--text);padding:5px 6px;border-radius:6px}
+.preset:hover{background:var(--panel-2)}
+.preset.on{background:var(--panel-2);border-color:var(--gold)}
+.preset .sw{width:22px;height:22px;border-radius:4px;background:var(--paper);color:#222;display:grid;place-items:center;font-size:12px;flex:none;font-weight:700}
+.preset .tag{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:10px;border:1px solid var(--line);color:var(--muted)}
+.preset .tag.css{border-color:#7a5f2a;color:var(--gold-2)}
+.preset .add{border:1px solid var(--line);background:transparent;color:var(--gold-2);border-radius:4px;width:22px;height:22px;line-height:1;font-size:15px;padding:0}
+.preset .add:hover{background:var(--gold);color:#221a05}
+.stage{background:var(--paper);border-radius:8px;padding:14px;color:var(--paper-ink);box-shadow:inset 0 0 0 1px #d6cfbf}
+.stage.dark{background:#2b2b2b;color:#ddd;box-shadow:inset 0 0 0 1px #444}
+.stage.fu{background:#3a2c22;color:#f1e6d3;box-shadow:inset 0 0 0 1px #6b5240}
+.stage.novel{background:#f0f0f3;color:#000;box-shadow:none}
+.stage.novel .chat-msg{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);padding:0;font-family:"Noto Serif KR","Batang",serif;font-size:var(--pv-base,16px);line-height:1.7}
+.stage.novel .chat-msg .hd{background:#f9f9f9;border-bottom:1px solid #eee;padding:6px 12px;color:#666;font-size:12px;margin:0;border-radius:12px 12px 0 0}
+.stage.novel .chat-content{padding:12px 15px}
+.stage-bar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.stage-bar .sp{flex:1}
+.toggle{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:4px 9px;font-size:12px}
+.toggle.on{border-color:var(--gold);color:var(--gold-2)}
+.chat-msg{background:rgba(255,255,255,.55);border:1px solid #b6ad9a;border-radius:3px;padding:6px 8px;font-family:"Signika",var(--sans);font-size:var(--pv-base,16px)}
+.stage.dark .chat-msg{background:rgba(0,0,0,.35);border-color:#555}
+.stage.fu .chat-msg{background:rgba(255,240,220,.08);border-color:#8a6a4f}
+.chat-msg .hd{display:flex;justify-content:space-between;font-size:11px;color:#6b6353;margin-bottom:4px;border-bottom:1px solid rgba(0,0,0,.12);padding-bottom:3px}
+.stage.dark .chat-msg .hd,.stage.fu .chat-msg .hd{color:#aaa;border-color:#555}
+.chat-content{min-height:44px;overflow-wrap:anywhere}
+.chat-content p{margin:0}
+.chat-msg.ooc{border-color:#4b6ea6}.chat-msg.emote{font-style:italic}
+textarea.sample{width:100%;min-height:60px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:8px;resize:vertical}
+.layer{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:8px;background:var(--panel)}
+.layer .lh{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.layer .lh b{font-weight:600}
+.layer .lh .k{font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:0 6px}
+.layer .lh .x{margin-left:auto;background:transparent;border:0;color:var(--muted);font-size:14px}
+.layer .lh .x:hover{color:var(--danger)}
+.layer .lh .mv{background:transparent;border:0;color:var(--muted);padding:0 3px}
+.param{display:grid;grid-template-columns:96px 1fr 60px 34px;gap:8px;align-items:center;margin:5px 0}
+.param label{font-size:12px;color:var(--muted)}
+.param input[type=range]{width:100%;accent-color:var(--gold)}
+.param input[type=color]{width:44px;height:26px;border:1px solid var(--line);background:transparent;padding:0;border-radius:4px}
+.param select,.param input[type=text]{background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:5px;padding:4px 6px;width:100%}
+.param .v{font-family:var(--mono);font-size:11px;color:var(--gold-2);text-align:right}
+.param .rt{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:4px;font-size:10px;padding:2px 0;width:34px}
+.param .rt.on{border-color:var(--gold);color:var(--gold-2);background:rgba(216,178,90,.12)}
+.param.check{grid-template-columns:96px 1fr}.param.check input{justify-self:start;accent-color:var(--gold)}
+.mods{display:flex;flex-wrap:wrap;gap:6px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--gold);color:#221a05;border:0;border-radius:6px;padding:7px 12px;font-weight:600;font-size:12px}
+.btn.ghost{background:transparent;color:var(--gold-2);border:1px solid var(--gold)}
+.btn.sm{padding:4px 9px}
+.codebox{position:relative;margin-bottom:12px}
+.codebox pre{margin:0;background:#12141b;border:1px solid var(--line);border-radius:6px;padding:10px;font-family:var(--mono);font-size:11px;line-height:1.5;color:#cfd3dd;max-height:280px;overflow:auto;white-space:pre}
+.codebox .cp{position:absolute;top:6px;right:6px}
+.note{font-size:12px;color:var(--muted);border-left:2px solid var(--gold);padding:4px 10px;margin:8px 0}
+.note.warn{border-color:var(--danger)}
+.seed{display:flex;gap:6px}
+.seed input{flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--gold-2);border-radius:5px;padding:5px 8px;font-family:var(--mono);font-size:11px}
+details.help{margin-top:12px;font-size:12px;color:var(--muted)}
+details.help summary{cursor:pointer;color:var(--gold-2)}
+details.help ol{padding-left:18px}
+details.help code{font-family:var(--mono);color:var(--text)}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--gold);color:#221a05;padding:8px 14px;border-radius:6px;font-weight:600;font-size:12px;opacity:0;transition:.2s;pointer-events:none}
+.toast.show{opacity:1}
+.empty{color:var(--muted);font-size:12px;padding:8px;border:1px dashed var(--line);border-radius:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>CHAT FX <small>Foundry VTT 채팅 효과 매크로 생성기</small></h1>
+  <span class="ver">v2 · FVTT v13 · DialogV2 · chat-fx 모듈</span>
+</header>
+<main>
+  <section class="col col-left">
+    <h2>효과 목록 <span>— 클릭: 교체 · ＋: 레이어로 겹치기</span></h2>
+    <div id="presetList"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn ghost sm" id="btnShuffle">셔플 (값만 바꾸기)</button>
+      <button class="btn ghost sm" id="btnRandom">랜덤 조합</button>
+    </div>
+  </section>
+
+  <section class="col col-mid">
+    <h2>미리보기</h2>
+    <div class="stage-bar">
+      <button class="toggle on" data-theme="">기본 밝은 채팅</button>
+      <button class="toggle" data-theme="dark">어두운 테마</button>
+      <button class="toggle" data-theme="fu">파울 갈색 로그</button>
+      <button class="toggle" data-theme="novel">소설 UI (novel-chat-ui)</button>
+      <span class="sp"></span>
+      <label style="font-size:11px;color:var(--muted)">미리보기 기준 크기 <select id="pvBase" style="background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:5px;padding:2px 4px"><option>13</option><option>14</option><option>15</option><option selected>16</option><option>17</option><option>18</option><option>20</option></select>px</label>
+      <button class="toggle" id="replay">▶ 애니메이션 다시</button>
+    </div>
+    <div class="stage" id="stage">
+      <div class="chat-msg" id="chatMsg">
+        <div class="hd"><b id="pvSpeaker">GM</b><span>방금 전</span></div>
+        <div class="chat-content" id="pvContent"></div>
+      </div>
+    </div>
+    <h2>샘플 텍스트</h2>
+    <textarea class="sample" id="sample">…누구냐. 거기 누가 있느냐.
+문 밖에서 들리는 목소리는 젖은 종이처럼 흐릿했다.</textarea>
+
+    <h2>레이어 <span>— 아래일수록 바깥쪽 · 각 값 옆 [실행 시] 켜면 FVTT 다이얼로그에서 그때그때 고름</span></h2>
+    <div id="layers"></div>
+
+    <h2>테마 존중 <span>— 채팅 UI 모듈(novel-chat-ui 등)의 글꼴·크기·배경을 그대로 두고 효과만 얹기</span></h2>
+    <div class="param check"><label>글꼴 상속</label><input type="checkbox" id="keepFont" checked><span style="font-size:11px;color:var(--muted)">효과의 font-family 지정을 전부 제거</span></div>
+    <div class="param check"><label>크기·줄높이 상속</label><input type="checkbox" id="keepSize" checked><span style="font-size:11px;color:var(--muted)">아래 글자 크기·줄 높이를 내보내지 않음</span></div>
+    <div class="param check"><label>박스 배경 투명</label><input type="checkbox" id="noBg"><span style="font-size:11px;color:var(--muted)">편지·대사창 등 박스 효과의 배경색을 투명으로</span></div>
+    <div class="param"><label>효과 크기 배율</label><input type="range" id="fxScale" min="50" max="150" value="100" step="5"><span class="v" id="fxScaleV">100%</span><span></span></div>
+
+    <h2>공통 수식어</h2>
+    <div class="mods" id="mods"></div>
+    <div class="param"><label>글자 크기</label><input type="range" id="fsz" min="11" max="40" value="16"><span class="v" id="fszV">16px</span><span></span></div>
+    <div class="param"><label>줄 높이</label><input type="range" id="lh" min="1" max="3" step=".1" value="1.6"><span class="v" id="lhV">1.6</span><span></span></div>
+    <div class="param"><label>정렬</label><select id="align"><option value="">기본</option><option value="center">가운데</option><option value="right">오른쪽</option></select><span></span><span></span></div>
+
+    <h2>매크로 옵션</h2>
+    <div class="param"><label>매크로 이름</label><input type="text" id="mName" value="채팅 효과"><span></span><span></span></div>
+    <div class="param"><label>화자</label><select id="speaker"><option value="user">내 유저 이름</option><option value="token">선택한 토큰</option><option value="anon">??? (익명)</option><option value="none">없음</option></select><span></span><span></span></div>
+    <div class="param"><label>메시지 종류</label><select id="style"><option value="IC">IC (캐릭터)</option><option value="OOC">OOC</option><option value="EMOTE">이모트</option></select><span></span><span></span></div>
+    <div class="param check"><label>줄바꿈 보존</label><input type="checkbox" id="prewrap" checked></div>
+    <div class="param check"><label>입력 HTML 이스케이프</label><input type="checkbox" id="esc" checked></div>
+    <div class="param check"><label>귓속말 대상 물어보기</label><input type="checkbox" id="whisper"></div>
+    <div class="param check"><label>모듈 없이: 메시지에 &lt;style&gt; 포함 (실험)</label><input type="checkbox" id="inlineStyle"></div>
+  </section>
+
+  <section class="col col-right">
+    <h2>시드 (설정 저장·복원)</h2>
+    <div class="seed"><input id="seed" readonly><button class="btn sm" id="seedCopy">복사</button><button class="btn ghost sm" id="seedPaste">붙여넣기</button></div>
+
+    <h2>① 매크로 코드 <span>— FVTT 스크립트 매크로로 붙여넣기</span></h2>
+    <div class="codebox"><pre id="codeMacro"></pre><button class="btn sm cp" data-copy="codeMacro">복사</button></div>
+
+    <div id="cssBlock" style="display:none">
+      <div class="note warn">애니메이션 레이어가 있습니다. <b>chat-fx 모듈</b>(아래 ④)을 월드에 설치·활성화하면 이 매크로가 바로 동작합니다. 모듈은 한 번만 넣으면 모든 효과·모든 값에 통용됩니다(값은 인라인 CSS 변수로 전달).</div>
+      <h2>② 모듈 없이 쓸 때 — GM 주입 매크로 <span>(테스트용, 새로고침마다 다시)</span></h2>
+      <div class="codebox"><pre id="codeInject"></pre><button class="btn sm cp" data-copy="codeInject">복사</button></div>
+    </div>
+
+    <h2>③ HTML 조각 <span>— 채팅창·저널에 직접 붙이기</span></h2>
+    <div class="codebox"><pre id="codeHtml"></pre><button class="btn sm cp" data-copy="codeHtml">복사</button></div>
+
+    <h2>④ chat-fx 모듈</h2>
+    <div class="seed"><input id="manifestUrl" readonly><button class="btn sm" id="manifestCopy">매니페스트 URL 복사</button></div>
+    <div class="row" style="margin-top:6px"><button class="btn ghost sm" id="dlModule">module.json 복사</button><button class="btn ghost sm" id="dlCss">chat-fx.css 복사</button></div>
+    <details class="help">
+      <summary>모듈 설치 방법</summary>
+      <ol>
+        <li>Foundry 설정 화면 → 모듈 설치 → 아래쪽 <b>매니페스트 URL</b> 칸에 위 URL 붙여넣기 → 설치</li>
+        <li>월드 접속 → 모듈 관리 → <b>Chat FX</b> 활성화</li>
+        <li>끝. 이후 어떤 효과·값을 만들어도 매크로만 붙이면 됩니다</li>
+      </ol>
+      <p>수동 설치: <code>Data/modules/chat-fx/</code>에 위 두 버튼으로 <code>module.json</code>, <code>chat-fx.css</code>를 저장 후 재시작.</p>
+      <p>대안: "Custom CSS" 계열 모듈의 CSS 칸에 chat-fx.css 내용을 통째로 붙여넣기 (효과 동일). 급할 땐 ② 주입 매크로, 또는 위 "메시지에 &lt;style&gt; 포함" 체크.</p>
+    </details>
+  </section>
+</main>
+<div class="toast" id="toast">복사됨</div>
+
+<script>
+/* ===================== helpers ===================== */
+const $=s=>document.querySelector(s);
+const esc=s=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const V=(id,k)=>`var(--fx-${id}-${k})`;            // css var reference
+const MIX=(id,k,pct)=>`color-mix(in srgb,${V(id,k)} ${pct}%,transparent)`;
+const R=(k,l,min,max,def,step=1,unit="")=>({k,l,t:"range",min,max,def,step,unit});
+const C=(k,l,def)=>({k,l,t:"color",def});
+const S=(k,l,opts,def)=>({k,l,t:"select",opts,def});   // opts: [[value,label]]
+const T=(k,l,def)=>({k,l,t:"text",def});
+
+const MODULE_CSS=`/* CHAT FX — Foundry VTT 채팅 효과 모듈 CSS
+   모든 값은 메시지 인라인 CSS 변수(--fx-*)로 들어옵니다. 클래스가 제거되는 환경을 위해 [style*=] 속성 선택자를 함께 둡니다. 이 파일은 바꾸지 않아도 됩니다. */
+
+@keyframes cfx-in{to{opacity:1}}
+@keyframes cfx-blink{50%{opacity:0}}
+
+/* 타자기 */
+.cfx-type>span,[style*="--fx-type-"] [style*="--cfx:1"]>span{opacity:0;animation:cfx-in .01s forwards;animation-delay:calc(var(--fx-type-sp,70ms)*var(--i))}
+.cfx-type>.cfx-cursor,[style*="--fx-type-"] [style*="--cfx:1"]>span:last-child{opacity:0;animation:cfx-in .01s forwards,cfx-blink 1s step-end infinite;animation-delay:calc(var(--fx-type-sp,70ms)*var(--n)),calc(var(--fx-type-sp,70ms)*var(--n))}
+/* 글자 낙하 등장 */
+.cfx-drop>span,[style*="--fx-drop-"] [style*="--cfx:1"]>span{opacity:0;animation:cfx-drop .5s ease-out forwards;animation-delay:calc(var(--fx-drop-sp,60ms)*var(--i))}
+@keyframes cfx-drop{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:none}}
+/* 흔들림 */
+.cfx-shake,[style*="--fx-shake-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-shake var(--fx-shake-spd,120ms) infinite}
+@keyframes cfx-shake{0%,100%{transform:none}25%{transform:translate(var(--fx-shake-amp,3px),calc(var(--fx-shake-amp,3px)*-.5))}50%{transform:translate(calc(var(--fx-shake-amp,3px)*-1),calc(var(--fx-shake-amp,3px)*.5))}75%{transform:translate(calc(var(--fx-shake-amp,3px)*.5),var(--fx-shake-amp,3px))}}
+/* 떨림 */
+.cfx-jitter>span,[style*="--fx-jitter-"] [style*="--cfx:1"]>span{animation:cfx-jitter .4s infinite;animation-delay:calc(var(--i)*-137ms)}
+@keyframes cfx-jitter{0%,100%{transform:none}33%{transform:translate(var(--fx-jitter-amp,1px),calc(var(--fx-jitter-amp,1px)*-1))}66%{transform:translate(calc(var(--fx-jitter-amp,1px)*-1),var(--fx-jitter-amp,1px))}}
+/* 형광등 깜빡임 */
+.cfx-flicker,[style*="--fx-flicker-"] [style*="--cfx:1"]{animation:cfx-flicker var(--fx-flicker-spd,1800ms) infinite}
+@keyframes cfx-flicker{0%,19%,21%,23%,25%,54%,56%,100%{opacity:1}20%,24%,55%{opacity:.15}}
+/* 글리치 */
+.cfx-glitch,[style*="--fx-glitch-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-glitch var(--fx-glitch-spd,700ms) infinite steps(1)}
+@keyframes cfx-glitch{0%{text-shadow:var(--fx-glitch-d,3px) 0 var(--fx-glitch-a,#f0f),calc(var(--fx-glitch-d,3px)*-1) 0 var(--fx-glitch-b,#0ff)}20%{text-shadow:calc(var(--fx-glitch-d,3px)*-1) 0 var(--fx-glitch-a,#f0f),var(--fx-glitch-d,3px) 0 var(--fx-glitch-b,#0ff);transform:skewX(3deg)}40%{text-shadow:var(--fx-glitch-d,3px) var(--fx-glitch-d,3px) var(--fx-glitch-a,#f0f),calc(var(--fx-glitch-d,3px)*-1) calc(var(--fx-glitch-d,3px)*-1) var(--fx-glitch-b,#0ff)}60%{text-shadow:none;transform:none}80%{text-shadow:calc(var(--fx-glitch-d,3px)*-2) 0 var(--fx-glitch-a,#f0f),calc(var(--fx-glitch-d,3px)*2) 0 var(--fx-glitch-b,#0ff);transform:translateX(var(--fx-glitch-d,3px))}100%{text-shadow:none}}
+/* 맥동 글로우 */
+.cfx-pulse,[style*="--fx-pulse-"] [style*="--cfx:1"]{animation:cfx-pulse var(--fx-pulse-spd,1200ms) ease-in-out infinite}
+@keyframes cfx-pulse{0%,100%{text-shadow:0 0 2px var(--fx-pulse-c,#f22)}50%{text-shadow:0 0 14px var(--fx-pulse-c,#f22),0 0 26px var(--fx-pulse-c,#f22)}}
+/* 심장박동(크기) */
+.cfx-beat,[style*="--fx-beat-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-beat var(--fx-beat-spd,1000ms) ease-in-out infinite}
+@keyframes cfx-beat{0%,100%{transform:scale(1)}15%{transform:scale(1.15)}30%{transform:scale(1)}45%{transform:scale(1.08)}}
+/* 물결 */
+.cfx-wave>span,[style*="--fx-wave-"] [style*="--cfx:1"]>span{animation:cfx-wave var(--fx-wave-spd,1400ms) ease-in-out infinite;animation-delay:calc(var(--i)*-80ms)}
+@keyframes cfx-wave{0%,100%{transform:translateY(0)}50%{transform:translateY(calc(var(--fx-wave-amp,5px)*-1))}}
+/* 무지개 순환 */
+.cfx-rainbow,[style*="--fx-rainbow-"] [style*="--cfx:1"]{animation:cfx-rainbow var(--fx-rainbow-spd,3000ms) linear infinite}
+@keyframes cfx-rainbow{to{filter:hue-rotate(360deg)}}
+/* 페이드인 */
+.cfx-fadein,[style*="--fx-fadein-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-fadein var(--fx-fadein-dur,1500ms) ease-out both}
+@keyframes cfx-fadein{from{opacity:0;transform:translateY(var(--fx-fadein-y,10px))}to{opacity:1;transform:none}}
+/* 흐림→선명 */
+.cfx-unblur,[style*="--fx-unblur-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-unblur var(--fx-unblur-dur,2500ms) ease-out both}
+@keyframes cfx-unblur{from{filter:blur(8px);opacity:.3}to{filter:blur(0);opacity:1}}
+/* 선명→흐림 (의식 잃음) */
+.cfx-blurout,[style*="--fx-blurout-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-blurout var(--fx-blurout-dur,3000ms) ease-in both}
+@keyframes cfx-blurout{from{filter:blur(0);opacity:1}to{filter:blur(6px);opacity:.15}}
+/* 회전 */
+.cfx-spin,[style*="--fx-spin-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-spin var(--fx-spin-spd,3000ms) linear infinite}
+@keyframes cfx-spin{to{transform:rotate(360deg)}}
+/* 숨쉬기 */
+.cfx-breathe,[style*="--fx-breathe-"] [style*="--cfx:1"]{animation:cfx-breathe var(--fx-breathe-spd,3000ms) ease-in-out infinite}
+@keyframes cfx-breathe{0%,100%{opacity:1}50%{opacity:var(--fx-breathe-min,.35)}}
+/* 불타는 글자 */
+.cfx-burn,[style*="--fx-burn-"] [style*="--cfx:1"]{display:inline-block;background:linear-gradient(0deg,#ff2d00,#ffb100,#fff3a0,#ffb100,#ff2d00);background-size:100% 300%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:cfx-burn var(--fx-burn-spd,1200ms) linear infinite}
+@keyframes cfx-burn{to{background-position:0 300%}}
+/* 마퀴(흐르는 자막) */
+.cfx-marquee,[style*="--fx-marquee-"] [style*="--cfx:1"]{display:block;overflow:hidden;white-space:nowrap}
+.cfx-marquee>span,[style*="--fx-marquee-"] [style*="--cfx:1"]>span{display:inline-block;padding-left:100%;animation:cfx-marquee var(--fx-marquee-spd,8000ms) linear infinite}
+@keyframes cfx-marquee{to{transform:translateX(-100%)}}
+/* 스캔라인 오버레이 */
+.cfx-scan,[style*="--fx-scan-"] [style*="--cfx:1"]{position:relative;display:block}
+.cfx-scan::after,[style*="--fx-scan-"] [style*="--cfx:1"]::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,var(--fx-scan-op,.25)) 2px 4px);animation:cfx-scan var(--fx-scan-spd,600ms) linear infinite}
+@keyframes cfx-scan{to{background-position:0 8px}}
+/* 물에 젖음(아래로 번짐) */
+.cfx-drip,[style*="--fx-drip-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-drip var(--fx-drip-dur,4000ms) ease-in both}
+@keyframes cfx-drip{from{text-shadow:0 0 0 currentColor;filter:none}to{text-shadow:0 10px 12px currentColor,0 18px 20px color-mix(in srgb,currentColor 50%,transparent);filter:blur(.6px)}}
+/* 지직거림 정적 배경 */
+.cfx-static,[style*="--fx-static-"] [style*="--cfx:1"]{position:relative;display:block}
+.cfx-static::before,[style*="--fx-static-"] [style*="--cfx:1"]::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:var(--fx-static-op,.18);background:repeating-radial-gradient(circle at 30% 40%,#000 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,#000 0 1px,transparent 1px 2px);animation:cfx-static var(--fx-static-spd,120ms) steps(2) infinite}
+@keyframes cfx-static{0%{transform:translate(0,0)}25%{transform:translate(-3px,2px)}50%{transform:translate(2px,-3px)}75%{transform:translate(-1px,-1px)}100%{transform:translate(3px,1px)}}
+@media (prefers-reduced-motion:reduce){[class*="cfx-"],[class*="cfx-"]>span,[class*="cfx-"]::before,[class*="cfx-"]::after{animation-duration:.001s!important;animation-iteration-count:1!important}}
+`;
+const MODULE_JSON=JSON.stringify({id:"chat-fx",title:"Chat FX — 채팅 텍스트 효과",description:"CHAT FX 생성기로 만든 채팅 애니메이션 효과용 스타일시트",version:"1.0.1",authors:[{name:"chat-fx"}],compatibility:{minimum:"12",verified:"13"},styles:["chat-fx.css"]},null,2);
+
+/* ===================== effects ===================== */
+/* 종류(kind): text=글자 스타일 / char=글자별 / wrap=박스 / xform=텍스트 변환 / anim=애니메이션(모듈 CSS)
+   style(v): 텍스트 span에 붙는 인라인 CSS (값은 var()로만 참조) · cls: 텍스트 span 클래스
+   charStyle: 글자별 span 인라인 CSS (var(--i), var(--n) 사용) · after: 텍스트 뒤 HTML
+   wrap(inner,v): 바깥 HTML · xform: {live:(t)=>t, js:"(t)=>t 코드"}  */
+const FX=[
+{group:"가리기·흐리기"},
+{id:"blur",name:"블러 문자",ico:"▒",kind:"text",p:[R("r","번짐 반경",2,30,10,1,"px"),R("o","가로 오프셋",0,12,5,1,"px"),C("c","그림자 색","#000000")],
+ style:`color:transparent;text-shadow:${V("blur","o")} 0 ${V("blur","r")} ${V("blur","c")},calc(${V("blur","o")}*-1) 0 ${V("blur","r")} ${V("blur","c")}`},
+{id:"censor",name:"검열 (드래그하면 읽힘)",ico:"█",kind:"text",p:[C("c","먹칠 색","#111111"),R("pad","여백",0,6,2,1,"px")],
+ style:`background:${V("censor","c")};color:${V("censor","c")};padding:${V("censor","pad")} 4px;border-radius:2px;box-decoration-break:clone;-webkit-box-decoration-break:clone`},
+{id:"fog",name:"안개 속 목소리",ico:"≋",kind:"text",p:[R("op","불투명도",10,90,45,1,"%"),R("bl","블러",0,4,1,.5,"px"),C("c","글자색","#555555")],
+ style:`color:${V("fog","c")};opacity:${V("fog","op")};filter:blur(${V("fog","bl")});font-style:italic`},
+{id:"chroma",name:"글리치 정지컷 (색수차)",ico:"⁂",kind:"text",p:[R("d","오프셋",1,8,3,1,"px"),C("a","색 A","#ff2a6d"),C("b","색 B","#05d9e8")],
+ style:`text-shadow:${V("chroma","d")} 0 ${V("chroma","a")},calc(${V("chroma","d")}*-1) 0 ${V("chroma","b")};font-family:monospace;letter-spacing:.05em`},
+{id:"ghost",name:"유령 (희끄무레)",ico:"◌",kind:"text",p:[C("c","빛 색","#cfe8ff"),R("op","불투명도",30,90,65,5,"%")],
+ style:`color:#fff;opacity:${V("ghost","op")};text-shadow:0 0 6px ${V("ghost","c")},0 0 14px ${V("ghost","c")};font-family:serif;font-style:italic;letter-spacing:.06em`},
+{id:"holo",name:"홀로그램",ico:"◈",kind:"text",p:[C("c","시안","#38e8ff")],
+ style:`color:${V("holo","c")};opacity:.85;text-shadow:0 0 4px ${V("holo","c")},2px 0 0 ${MIX("holo","c",40)},-2px 0 0 ${MIX("holo","c",40)};font-family:monospace;letter-spacing:.08em`},
+{id:"erased",name:"지워진 문서",ico:"—",kind:"xform",p:[R("pct","지운 비율",10,90,45,5,"%"),C("c","잉크색","#5a4a3a")],
+ style:`color:${V("erased","c")};font-family:serif`,
+ xform:{live:(t,v)=>{let i=0;return t.replace(/[^\s]+/g,w=>{i++;return (i*7919)%100<v.pct?`<s style="opacity:.35">${w}</s>`:w})},
+        js:(pv)=>`(t=>{let i=0;return t.replace(/[^\\s]+/g,w=>{i++;return (i*7919)%100<${pv("pct")}?"<s style='opacity:.35'>"+w+"</s>":w})})`}},
+{id:"rune",name:"룬 문자 (해독 불가)",ico:"ᚱ",kind:"xform",p:[C("c","글자색","#3b2f5c"),R("ls","자간",0,8,3,1,"px")],
+ style:`color:${V("rune","c")};letter-spacing:${V("rune","ls")};font-size:1.15em`,
+ xform:{live:t=>t.split(/(&[a-zA-Z#0-9]+;)/).map((seg,j)=>j%2?seg:seg.replace(/[^\s.,!?…<>\/a-z]/g,c=>RUNES[runeIdx(c)])).join(""),
+        js:()=>`(t=>{const R="${RUNES}",h=c=>{let x=c.charCodeAt(0);x=Math.imul(x^(x>>>7),2654435761)>>>0;x=(x^(x>>>13))>>>0;return x%R.length};return t.split(/(&[a-zA-Z#0-9]+;)/).map((seg,j)=>j%2?seg:seg.replace(/[^\\s.,!?…]/g,c=>R[h(c)])).join("")})`}},
+
+{group:"음성·강조"},
+{id:"shout",name:"고함",ico:"!",kind:"text",p:[R("sz","크기 배율",110,220,150,10,"%"),C("c","글자색","#8b1a1a"),R("rot","기울기",-6,6,-2,1,"deg")],
+ style:`display:inline-block;font-size:${V("shout","sz")};font-weight:900;color:${V("shout","c")};transform:rotate(${V("shout","rot")});letter-spacing:.02em`},
+{id:"whisper",name:"속삭임",ico:"·",kind:"text",p:[R("sz","크기 배율",60,95,80,5,"%"),C("c","글자색","#777777"),R("ls","자간",-1,3,0,.5,"px")],
+ style:`font-size:${V("whisper","sz")};font-style:italic;color:${V("whisper","c")};letter-spacing:${V("whisper","ls")}`},
+{id:"grow",name:"점점 커짐 (다가오는 목소리)",ico:"◢",kind:"char",p:[R("a","시작 크기",50,120,70,5),R("b","끝 크기",100,260,180,10)],
+ charStyle:`font-size:calc((${V("grow","a")} + (${V("grow","b")} - ${V("grow","a")})*var(--i)/var(--n))*1%)`},
+{id:"fear",name:"두려움 (들쭉날쭉)",ico:"⁞",kind:"char",p:[R("amt","진폭",5,40,15,1)],
+ charStyle:`font-size:calc((100 + sin(var(--i)*2.3)*${V("fear","amt")})*1%);transform:translateY(calc(cos(var(--i)*1.7)*1px))`},
+{id:"drunk",name:"취중 (비틀거림)",ico:"↯",kind:"char",p:[R("deg","기울기",2,20,8,1,"deg")],
+ charStyle:`transform:rotate(calc(sin(var(--i)*1.9)*${V("drunk","deg")})) translateY(calc(cos(var(--i)*1.3)*2px))`},
+{id:"machine",name:"기계 음성",ico:"▮",kind:"text",p:[R("ls","자간",2,12,5,1,"px"),C("c","글자색","#2f6f4f"),C("bg","배경","#e8f2ec")],
+ style:`font-family:monospace;letter-spacing:${V("machine","ls")};color:${V("machine","c")};background:${V("machine","bg")};padding:2px 6px;border-left:3px solid ${V("machine","c")}`},
+{id:"radio",name:"무전기 / 라디오",ico:"⌇",kind:"text",p:[C("c","글자색","#3d3d3d")],
+ style:`font-family:monospace;color:${V("radio","c")};letter-spacing:.12em;text-transform:uppercase;text-shadow:1px 0 0 ${MIX("radio","c",50)}`,
+ xform:{live:t=>`⟪ ${t} ⟫`,js:()=>`(t=>"⟪ "+t+" ⟫")`}},
+{id:"song",name:"노래 / 가사",ico:"♪",kind:"text",p:[C("c","글자색","#4a3b8f")],
+ style:`font-style:italic;color:${V("song","c")};font-family:serif;letter-spacing:.03em`,
+ xform:{live:t=>`♪ ${t} ♫`,js:()=>`(t=>"♪ "+t+" ♫")`}},
+{id:"sfx",name:"효과음 (쾅!)",ico:"✷",kind:"text",p:[C("c","글자색","#ff5a00"),R("sk","기울기",-25,25,-12,1,"deg")],
+ style:`display:inline-block;font-weight:900;font-size:1.6em;color:${V("sfx","c")};-webkit-text-stroke:1px #222;transform:skewX(${V("sfx","sk")});letter-spacing:.04em`},
+{id:"outline",name:"속 빈 아웃라인",ico:"○",kind:"text",p:[R("w","선 두께",0.5,3,1,.25,"px"),C("c","선 색","#222222")],
+ style:`-webkit-text-stroke:${V("outline","w")} ${V("outline","c")};color:transparent;font-weight:900;font-size:1.3em`},
+
+{group:"색·질감"},
+{id:"neon",name:"네온 글로우",ico:"✺",kind:"text",p:[C("c","네온 색","#ff3cac"),R("g","광량",4,30,14,1,"px")],
+ style:`color:#fff;font-weight:700;text-shadow:0 0 calc(${V("neon","g")}/3) #fff,0 0 ${V("neon","g")} ${V("neon","c")},0 0 calc(${V("neon","g")}*2) ${V("neon","c")}`},
+{id:"grad",name:"그라데이션 텍스트",ico:"◐",kind:"text",p:[S("th","테마",[["#ff4e00,#ffb100,#fff1a8","불꽃"],["#8fd3ff,#e6f7ff,#5aa9ff","얼음"],["#3cff87,#0f7a3a,#b0ff5c","독"],["#7a5200,#ffd66b,#7a5200","황금"],["#ff0000,#ff9900,#ffee00,#33cc33,#3399ff,#9933ff","무지개"],["#c8b6ff,#7a5cff,#2b1a6b","보라 마력"]],"#ff4e00,#ffb100,#fff1a8"),R("ang","각도",0,360,90,15,"deg")],
+ style:`display:inline-block;background:linear-gradient(${V("grad","ang")},${V("grad","th")});-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800`},
+{id:"blood",name:"핏자국",ico:"⁕",kind:"text",p:[C("c","피 색","#7a0c0c"),R("d","번짐",2,14,7,1,"px")],
+ style:`color:${V("blood","c")};font-family:serif;font-weight:700;text-shadow:0 calc(${V("blood","d")}/2) ${V("blood","d")} ${MIX("blood","c",60)},0 ${V("blood","d")} calc(${V("blood","d")}*2) ${MIX("blood","c",35)}`},
+{id:"emboss",name:"금속 양각",ico:"◫",kind:"text",p:[C("c","베이스","#8f8f8f")],
+ style:`color:${V("emboss","c")};text-shadow:1px 1px 0 #fff,-1px -1px 0 #333,2px 2px 3px rgba(0,0,0,.4);font-weight:800;letter-spacing:.04em`},
+{id:"marker",name:"형광펜 하이라이트",ico:"▬",kind:"text",p:[C("c","형광 색","#fff17a")],
+ style:`background:linear-gradient(transparent 45%,${V("marker","c")} 45%,${V("marker","c")} 92%,transparent 92%);padding:0 2px;box-decoration-break:clone;-webkit-box-decoration-break:clone`},
+{id:"crayon",name:"낙서 / 크레용",ico:"✎",kind:"text",p:[C("c","색","#d23c2a")],
+ style:`font-family:'Comic Sans MS','Nanum Pen Script',cursive;color:${V("crayon","c")};font-size:1.2em;transform:rotate(-1.5deg);display:inline-block;text-shadow:1px 1px 0 ${MIX("crayon","c",40)}`},
+{id:"inverse",name:"흑백 반전 박스",ico:"◼",kind:"text",p:[C("bg","배경","#111111"),C("c","글자","#f5f5f5")],
+ style:`background:${V("inverse","bg")};color:${V("inverse","c")};padding:1px 6px;box-decoration-break:clone;-webkit-box-decoration-break:clone`},
+
+{group:"박스·연출 카드"},
+{id:"system",name:"시스템 안내 박스",ico:"ⓘ",kind:"wrap",p:[C("c","테마색","#2b5fb0"),T("lb","라벨","안내")],
+ wrap:(inner,v)=>`<div style="border:1px solid ${V("system","c")};border-left:5px solid ${V("system","c")};background:${MIX("system","c",8)};padding:6px 10px;border-radius:4px"><div style="font-size:.75em;font-weight:700;color:${V("system","c")};letter-spacing:.1em">${v.lb}</div><div style="margin-top:2px">${inner}</div></div>`},
+{id:"letter",name:"편지 / 양피지",ico:"✉",kind:"wrap",p:[C("bg","종이색","#f3e6c8"),C("c","잉크색","#4a3620")],
+ wrap:inner=>`<div style="background:${V("letter","bg")};color:${V("letter","c")};border:1px solid ${MIX("letter","c",40)};padding:12px 14px;font-family:'Nanum Myeongjo','Noto Serif KR',serif;line-height:1.8;box-shadow:inset 0 0 18px ${MIX("letter","c",15)}">${inner}</div>`},
+{id:"phone",name:"스마트폰 문자",ico:"▭",kind:"wrap",p:[S("side","방향",[["flex-start","받은 문자"],["flex-end","보낸 문자"]],"flex-start"),C("bg","말풍선","#e5e5ea"),C("c","글자","#111111"),T("tm","시각","오전 2:14")],
+ wrap:(inner,v)=>`<div style="display:flex;justify-content:${V("phone","side")}"><div style="max-width:78%;background:${V("phone","bg")};color:${V("phone","c")};padding:8px 12px;border-radius:16px;font-family:-apple-system,sans-serif">${inner}<div style="font-size:.7em;opacity:.55;text-align:right;margin-top:2px">${v.tm}</div></div></div>`},
+{id:"terminal",name:"터미널 / 해킹",ico:">",kind:"wrap",p:[C("c","글자","#39ff6a"),C("bg","배경","#0b0f0c"),T("pr","프롬프트","root@sys:~$ ")],
+ wrap:(inner,v)=>`<div style="background:${V("terminal","bg")};color:${V("terminal","c")};font-family:'D2Coding',Consolas,monospace;padding:8px 10px;border-radius:3px;text-shadow:0 0 4px ${MIX("terminal","c",60)}"><span style="opacity:.7">${v.pr}</span>${inner}<span>▮</span></div>`},
+{id:"jrpg",name:"레트로 대사창",ico:"▣",kind:"wrap",p:[C("bg","배경","#1b2f8a"),C("c","글자","#ffffff"),T("nm","이름표","???")],
+ wrap:(inner,v)=>`<div style="background:${V("jrpg","bg")};color:${V("jrpg","c")};border:3px double #fff;border-radius:6px;padding:8px 12px;font-family:'DungGeunMo','Galmuri11',monospace;line-height:1.7"><div style="display:inline-block;background:#fff;color:${V("jrpg","bg")};padding:0 8px;font-weight:700;margin-bottom:4px">${v.nm}</div><div>${inner} ▼</div></div>`},
+{id:"warn",name:"경고 배너",ico:"⚠",kind:"wrap",p:[C("a","줄무늬 A","#f4c20d"),C("b","줄무늬 B","#111111"),C("bg","배경","#fff8dc")],
+ wrap:inner=>`<div style="border:6px solid;border-image:repeating-linear-gradient(45deg,${V("warn","a")} 0 10px,${V("warn","b")} 10px 20px) 6;padding:8px 10px;background:${V("warn","bg")};font-weight:800;text-align:center">${inner}</div>`},
+{id:"wanted",name:"현상수배 / 게시문",ico:"☠",kind:"wrap",p:[T("hd","머리글","WANTED"),C("c","잉크","#3a2a14"),C("bg","종이","#efe0b8")],
+ wrap:(inner,v)=>`<div style="background:${V("wanted","bg")};color:${V("wanted","c")};border:4px double ${V("wanted","c")};padding:10px 14px;text-align:center;font-family:'Times New Roman',serif"><div style="font-size:1.6em;font-weight:900;letter-spacing:.25em;border-bottom:2px solid ${V("wanted","c")};margin-bottom:6px">${v.hd}</div>${inner}</div>`},
+{id:"subtitle",name:"영화 자막 (시간·장소)",ico:"▬",kind:"wrap",p:[C("bg","바 색","#000000"),C("c","글자","#ffffff")],
+ wrap:inner=>`<div style="background:${V("subtitle","bg")};color:${V("subtitle","c")};padding:10px 16px;text-align:center;letter-spacing:.2em;font-family:'Nanum Myeongjo',serif;text-transform:uppercase">${inner}</div>`},
+{id:"chapter",name:"챕터 제목",ico:"❦",kind:"wrap",p:[C("c","색","#6b4b1e"),T("no","챕터 번호","제 3 장")],
+ wrap:(inner,v)=>`<div style="text-align:center;color:${V("chapter","c")};font-family:'Nanum Myeongjo',serif;padding:6px 0"><div style="font-size:.75em;letter-spacing:.4em;opacity:.7">${v.no}</div><div style="font-size:1.35em;font-weight:700;margin:2px 0 4px">${inner}</div><div style="letter-spacing:.3em;opacity:.6">❧ ✦ ☙</div></div>`},
+{id:"stamp",name:"도장 / 스탬프",ico:"◯",kind:"wrap",p:[C("c","도장 색","#c8102e"),T("tx","도장 글자","極秘"),R("rot","회전",-30,30,-12,1,"deg")],
+ wrap:(inner,v)=>`<div style="position:relative;padding:8px 6px">${inner}<div style="position:absolute;right:8px;top:0;border:3px solid ${V("stamp","c")};color:${V("stamp","c")};padding:2px 8px;font-weight:900;font-size:1.1em;letter-spacing:.15em;transform:rotate(${V("stamp","rot")});opacity:.75;border-radius:4px;pointer-events:none;mix-blend-mode:multiply">${v.tx}</div></div>`},
+{id:"quote",name:"인용문",ico:"❝",kind:"wrap",p:[C("c","바 색","#9a8b6a"),T("by","출처","— 고서 《잿빛 예언》")],
+ wrap:(inner,v)=>`<div style="border-left:3px solid ${V("quote","c")};padding:4px 12px;font-style:italic">${inner}<div style="text-align:right;font-size:.85em;opacity:.7;margin-top:4px">${v.by}</div></div>`},
+{id:"vertical",name:"세로쓰기",ico:"丨",kind:"wrap",p:[R("h","높이",120,360,200,20,"px")],
+ wrap:inner=>`<div style="writing-mode:vertical-rl;height:${V("vertical","h")};font-family:'Nanum Myeongjo',serif;letter-spacing:.15em;margin:0 auto">${inner}</div>`},
+{id:"mirror",name:"거울 문자",ico:"⇋",kind:"wrap",p:[S("m","방향",[["scaleX(-1)","좌우"],["scaleY(-1)","상하"],["rotate(180deg)","180°"]],"scaleX(-1)")],
+ wrap:inner=>`<div style="display:inline-block;transform:${V("mirror","m")}">${inner}</div>`},
+
+{group:"애니메이션 (chat-fx 모듈 필요)",anim:true},
+{id:"type",name:"타자기",ico:"⌨",kind:"anim",per:true,p:[R("sp","글자 간격",30,200,70,10,"ms")],cls:"cfx-type",after:`<span class="cfx-cursor">▮</span>`},
+{id:"drop",name:"글자 낙하 등장",ico:"⇣",kind:"anim",per:true,p:[R("sp","글자 간격",20,150,60,10,"ms")],cls:"cfx-drop"},
+{id:"shake",name:"흔들림 (분노·공포)",ico:"≈",kind:"anim",p:[R("amp","진폭",1,8,3,1,"px"),R("spd","속도",50,600,120,10,"ms")],cls:"cfx-shake"},
+{id:"jitter",name:"떨림 (추위)",ico:"⁞",kind:"anim",per:true,p:[R("amp","진폭",.5,4,1,.5,"px")],cls:"cfx-jitter"},
+{id:"flicker",name:"깜빡임 (형광등)",ico:"☼",kind:"anim",p:[R("spd","주기",600,4000,1800,100,"ms")],cls:"cfx-flicker"},
+{id:"glitch",name:"글리치",ico:"▞",kind:"anim",p:[R("d","오프셋",1,8,3,1,"px"),R("spd","속도",200,2000,700,50,"ms"),C("a","색 A","#ff00ff"),C("b","색 B","#00ffff")],cls:"cfx-glitch"},
+{id:"pulse",name:"맥동 글로우",ico:"✧",kind:"anim",p:[C("c","빛 색","#ff2d2d"),R("spd","주기",600,3000,1200,100,"ms")],cls:"cfx-pulse"},
+{id:"beat",name:"심장박동 (크기)",ico:"♥",kind:"anim",p:[R("spd","주기",600,2000,1000,100,"ms")],cls:"cfx-beat"},
+{id:"wave",name:"물결",ico:"∿",kind:"anim",per:true,p:[R("amp","진폭",2,12,5,1,"px"),R("spd","속도",600,3000,1400,100,"ms")],cls:"cfx-wave"},
+{id:"rainbow",name:"무지개 순환 (색상 회전)",ico:"◔",kind:"anim",p:[R("spd","주기",1000,8000,3000,250,"ms")],cls:"cfx-rainbow"},
+{id:"burn",name:"불타는 글자",ico:"🔥",kind:"anim",p:[R("spd","속도",400,3000,1200,100,"ms")],cls:"cfx-burn"},
+{id:"fadein",name:"페이드인 / 떠오름",ico:"⇡",kind:"anim",p:[R("dur","길이",300,4000,1500,100,"ms"),R("y","이동",0,30,10,1,"px")],cls:"cfx-fadein"},
+{id:"unblur",name:"흐림 → 선명",ico:"◍",kind:"anim",p:[R("dur","길이",800,6000,2500,100,"ms")],cls:"cfx-unblur"},
+{id:"blurout",name:"선명 → 흐림 (의식 잃음)",ico:"◎",kind:"anim",p:[R("dur","길이",800,8000,3000,100,"ms")],cls:"cfx-blurout"},
+{id:"spin",name:"회전 (어지러움)",ico:"⟳",kind:"anim",p:[R("spd","한 바퀴",800,6000,3000,100,"ms")],cls:"cfx-spin"},
+{id:"breathe",name:"숨쉬기 (밝아졌다 어두워짐)",ico:"◑",kind:"anim",p:[R("spd","주기",1000,6000,3000,100,"ms"),R("min","최소 밝기",5,80,35,5,"%")],cls:"cfx-breathe"},
+{id:"drip",name:"물에 젖음 (번져 내림)",ico:"💧",kind:"anim",p:[R("dur","길이",1000,8000,4000,100,"ms")],cls:"cfx-drip"},
+{id:"marquee",name:"흐르는 자막 (뉴스 티커)",ico:"⇠",kind:"anim",wrapAnim:true,p:[R("spd","한 바퀴",3000,20000,8000,500,"ms")],
+ wrap:inner=>`<div class="cfx-marquee"><span>${inner}</span></div>`},
+{id:"scan",name:"스캔라인 오버레이",ico:"≡",kind:"anim",wrapAnim:true,p:[R("op","진하기",5,60,25,5,"%"),R("spd","속도",200,2000,600,50,"ms")],
+ wrap:inner=>`<div class="cfx-scan">${inner}</div>`},
+{id:"static",name:"지직거림 (정적 노이즈)",ico:"▚",kind:"anim",wrapAnim:true,p:[R("op","진하기",5,50,18,1,"%"),R("spd","속도",60,400,120,10,"ms")],
+ wrap:inner=>`<div class="cfx-static">${inner}</div>`},
+];
+const RUNES="ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟᛡᛣᛦᛩ";
+const runeIdx=c=>{let x=c.charCodeAt(0);x=Math.imul(x^(x>>>7),2654435761)>>>0;x=(x^(x>>>13))>>>0;return x%RUNES.length};
+const MODS=[{id:"bold",l:"굵게",css:"font-weight:700"},{id:"italic",l:"기울임",css:"font-style:italic"},{id:"upper",l:"대문자",css:"text-transform:uppercase"},
+ {id:"serif",l:"명조",css:"font-family:'Nanum Myeongjo','Noto Serif KR',serif"},{id:"mono",l:"고정폭",css:"font-family:'D2Coding',Consolas,monospace"},{id:"spark",l:"✦ 반짝이 장식",css:""}];
+const byId=id=>FX.find(f=>f.id===id);
+
+/* ===================== state ===================== */
+/* layers: [{id, v:{k:val}, rt:{k:bool}}]  — rt: 실행 시(다이얼로그에서) 입력받는 파라미터 */
+let layers=[], mods=new Set();
+const defaults=fx=>Object.fromEntries(fx.p.map(x=>[x.k,x.def]));
+const defaultRt=fx=>Object.fromEntries(fx.p.map(x=>[x.k,x.t==="color"]));   // 색상은 기본으로 실행 시 입력
+function setSingle(id){layers=[{id,v:defaults(byId(id)),rt:defaultRt(byId(id))}];rebuild();}
+function addLayer(id){if(layers.some(l=>l.id===id)){toast("이미 있는 효과예요");return;}
+  const f=byId(id);
+  const isChar=x=>x.per||x.charStyle, isX=x=>!!x.xform;
+  if(layers.some(l=>(isChar(byId(l.id))&&isX(f))||(isX(byId(l.id))&&isChar(f)))){toast("텍스트 변환 효과와 글자별 효과는 함께 쓸 수 없어요");return;}
+  layers.push({id,v:defaults(f),rt:defaultRt(f)});rebuild();}
+function removeLayer(i){layers.splice(i,1);rebuild();}
+function moveLayer(i,d){const j=i+d;if(j<0||j>=layers.length)return;[layers[i],layers[j]]=[layers[j],layers[i]];rebuild();}
+
+/* ===================== UI build ===================== */
+function buildPresets(){
+  const box=$("#presetList");box.innerHTML="";let g;
+  FX.forEach(f=>{
+    if(f.group){g=document.createElement("div");g.className="preset-group";g.innerHTML=`<div class="g">${f.group}</div>`;box.append(g);return;}
+    const b=document.createElement("div");b.className="preset"+(layers.some(l=>l.id===f.id)?" on":"");b.dataset.id=f.id;
+    b.innerHTML=`<span class="sw">${f.ico}</span><span style="flex:1;cursor:pointer">${f.name}</span>${f.kind==="anim"?'<span class="tag css">CSS</span>':`<span class="tag">${{text:"글자",char:"글자별",wrap:"박스",xform:"변환"}[f.kind]}</span>`}<button class="add" title="레이어로 추가">+</button>`;
+    b.querySelector("span[style]").onclick=()=>setSingle(f.id);b.querySelector(".sw").onclick=()=>setSingle(f.id);
+    b.querySelector(".add").onclick=e=>{e.stopPropagation();addLayer(f.id)};g.append(b);
+  });
+  const m=$("#mods");m.innerHTML="";MODS.forEach(x=>{const b=document.createElement("button");b.className="toggle"+(mods.has(x.id)?" on":"");b.textContent=x.l;b.onclick=()=>{mods.has(x.id)?mods.delete(x.id):mods.add(x.id);b.classList.toggle("on");update();};m.append(b);});
+}
+function buildLayers(){
+  const box=$("#layers");box.innerHTML="";
+  if(!layers.length){box.innerHTML=`<div class="empty">왼쪽 목록에서 효과를 고르세요. ＋ 를 누르면 여러 효과를 겹칠 수 있어요.</div>`;return;}
+  layers.forEach((L,i)=>{
+    const f=byId(L.id);const d=document.createElement("div");d.className="layer";
+    d.innerHTML=`<div class="lh"><b>${f.ico} ${f.name}</b><span class="k">${f.kind==="anim"?"애니메이션":{text:"글자",char:"글자별",wrap:"박스",xform:"변환"}[f.kind]}</span>
+      <button class="mv" title="안쪽으로">↑</button><button class="mv" title="바깥쪽으로">↓</button><button class="x" title="제거">✕</button></div>`;
+    const [up,down]=d.querySelectorAll(".mv");up.onclick=()=>moveLayer(i,-1);down.onclick=()=>moveLayer(i,1);d.querySelector(".x").onclick=()=>removeLayer(i);
+    if(!f.p.length)d.insertAdjacentHTML("beforeend",`<div style="font-size:12px;color:var(--muted)">설정값 없음</div>`);
+    f.p.forEach(x=>{
+      const row=document.createElement("div");row.className="param";let inp;
+      if(x.t==="range")inp=`<input type="range" min="${x.min}" max="${x.max}" step="${x.step}" value="${L.v[x.k]}"><span class="v">${L.v[x.k]}${x.unit}</span>`;
+      else if(x.t==="color")inp=`<input type="color" value="${L.v[x.k]}"><span class="v">${L.v[x.k]}</span>`;
+      else if(x.t==="text")inp=`<input type="text" value="${esc(L.v[x.k])}"><span></span>`;
+      else inp=`<select>${x.opts.map(o=>`<option value="${o[0]}"${o[0]===L.v[x.k]?" selected":""}>${o[1]}</option>`).join("")}</select><span></span>`;
+      row.innerHTML=`<label>${x.l}</label>${inp}<button class="rt${L.rt[x.k]?" on":""}" title="켜면 매크로 실행 시 다이얼로그에서 입력">실행 시</button>`;
+      const el=row.querySelector("input,select");
+      el.oninput=()=>{L.v[x.k]=x.t==="range"?+el.value:el.value;const v=row.querySelector(".v");if(v)v.textContent=el.value+(x.unit||"");update();};
+      row.querySelector(".rt").onclick=e=>{L.rt[x.k]=!L.rt[x.k];e.target.classList.toggle("on");update();};
+      d.append(row);
+    });
+    box.append(d);
+  });
+}
+function rebuild(){buildPresets();buildLayers();update();}
+
+/* ===================== render (live & macro share this) ===================== */
+/* M=false: 미리보기용 실제 값 / M=true: 매크로 템플릿용 — 실행 시 파라미터는 ${f.id_k} 자리표시자 */
+function compose(text,M){
+  const vars=[],styles=[],charStyles=[],cls=[],afters=[],wraps=[],cssParts=[];let hasChar=false;
+  const rtKeys=[];  // 다이얼로그에서 입력받을 파라미터
+  for(const L of layers){
+    const f=byId(L.id);
+    const pv={};
+    f.p.forEach(x=>{
+      const isRt=L.rt[x.k];
+      let raw=L.v[x.k];
+      if(M&&isRt){rtKeys.push({L,f,x});raw="${f."+f.id+"_"+x.k+"}";}
+      pv[x.k]=raw;
+      if(x.t==="text"){pv[x.k]=(M&&isRt)?raw:esc(String(raw));return;}   // 라벨류는 HTML로만 사용
+      const frac=x.t==="range"&&x.unit==="%"&&!["sz","pct"].includes(x.k);   // 불투명도류 %는 0~1 소수로
+      let val=raw,unit=x.t==="range"?x.unit:"";
+      if(frac){unit="";val=M&&isRt?`calc(${raw}/100)`:(raw/100);}
+      if(x.t==="color"&&x.k==="bg"&&$("#noBg").checked)val="transparent";
+      vars.push(`--fx-${f.id}-${x.k}:${val}${unit}`);
+    });
+    if(f.style)styles.push(f.style);
+    if(f.charStyle){charStyles.push(f.charStyle);hasChar=true;}
+    if(f.per)hasChar=true;
+    if(f.cls)cls.push(f.cls);
+    if(f.after)afters.push(f.after);
+    if(f.wrap)wraps.push(inner=>f.wrap(inner,pv));
+    if(f.xform){text=M?`\${(${f.xform.js(k=>L.rt[k]?`Number(f.${f.id}_${k})`:JSON.stringify(L.v[k]))})(${text.slice(2,-1)})}`:f.xform.live(text,L.v);}
+    if(f.kind==="anim")cssParts.push(f.id);
+  }
+  // 글자별 분할
+  let body;
+  const n=M?"${n}":(text.match(/&[a-zA-Z#0-9]+;|[^\n]/g)||[]).length||1;
+  if(hasChar){
+    const cs=charStyles.join(";");
+    body=M?`\${spanize(text,i=>"--i:"+i+"${cs?";"+cs:""}")}`:spanize(text,i=>`--i:${i}${cs?";"+cs:""}`);
+  }else body=M?"${("+text.slice(2,-1)+").replace(/\\n/g,\"<br>\")}":text.replace(/\n/g,"<br>");
+  let inner=`<span class="cfx ${cls.join(" ")}" style="--cfx:1;${styles.join(";")}">${body}${afters.join("")}</span>`;
+  wraps.forEach(w=>inner=w(inner));
+  const common=$("#keepSize").checked?(+$("#fxScale").value!==100?[`font-size:${(+$("#fxScale").value/100).toFixed(2)}em`]:[]):[`font-size:${$("#fsz").value}px`,`line-height:${$("#lh").value}`];if($("#align").value)common.push(`text-align:${$("#align").value}`);
+  MODS.forEach(m=>{if(mods.has(m.id)&&m.css)common.push(m.css)});if($("#prewrap").checked)common.push("white-space:pre-wrap");
+  let html=`<div class="cfx-msg" style="--n:${n};${vars.join(";")};${common.join(";")}">${inner}</div>`;
+  if($("#keepFont").checked)html=html.replace(/font-family:[^;"]*;?/g,"");
+  return {html,anim:cssParts.length>0,rtKeys,hasChar};
+}
+function spanize(text,fn){let i=0;return (text.match(/&[a-zA-Z#0-9]+;|\n|[\s\S]/g)||[]).map(ch=>ch==="\n"?"<br>":`<span style="display:inline-block;${fn(i++)}">${ch===" "?"&nbsp;":ch}</span>`).join("")}
+function sampleText(){let raw=$("#sample").value;let t=$("#esc").checked?esc(raw):raw;if(mods.has("spark"))t="✦ "+t+" ✦";return t;}
+
+let styleEl=document.createElement("style");styleEl.textContent=MODULE_CSS;document.head.append(styleEl);
+function update(){
+  const live=compose(sampleText(),false);
+  $("#pvContent").innerHTML=live.html;
+  $("#pvSpeaker").textContent={user:"GM",token:"에린 (토큰)",anon:"???",none:""}[$("#speaker").value];
+  $("#chatMsg").className="chat-msg "+$("#style").value.toLowerCase();
+  $("#cssBlock").style.display=live.anim?"":"none";
+  $("#codeHtml").textContent=live.html;
+  $("#codeInject").textContent=injectCode();
+  $("#codeMacro").textContent=layers.length?macroCode():"// 효과를 하나 이상 고르세요";
+  $("#seed").value=makeSeed();
+}
+$("#replay").onclick=()=>{const c=$("#pvContent");const h=c.innerHTML;c.innerHTML="";requestAnimationFrame(()=>c.innerHTML=h);};
+
+/* ===================== macro ===================== */
+function macroCode(){
+  const name=$("#mName").value||"채팅 효과", sp=$("#speaker").value, st=$("#style").value, wh=$("#whisper").checked;
+  const {html:tpl,anim,rtKeys,hasChar}=compose("${text}",true);
+  const speaker={user:`ChatMessage.getSpeaker({alias: game.user.name})`,token:`ChatMessage.getSpeaker()`,anon:`{alias: "???"}`,none:`{alias: ""}`}[sp];
+  const inl=anim&&$("#inlineStyle").checked?`<style>${MODULE_CSS.replace(/\n/g," ")}</style>`:"";
+  // 다이얼로그 필드
+  const fields=rtKeys.map(({L,f,x})=>{
+    const nm=`${f.id}_${x.k}`,lab=`${f.name.replace(/\s*\(.*\)/,"")} · ${x.l}`;
+    if(x.t==="color")return `<div class="form-group"><label>${lab}</label><input type="color" name="${nm}" value="${L.v[x.k]}"></div>`;
+    if(x.t==="range")return `<div class="form-group"><label>${lab} (${x.min}–${x.max}${x.unit})</label><input type="number" name="${nm}" min="${x.min}" max="${x.max}" step="${x.step}" value="${L.v[x.k]}"></div>`;
+    if(x.t==="text")return `<div class="form-group"><label>${lab}</label><input type="text" name="${nm}" value="${esc(L.v[x.k])}"></div>`;
+    return `<div class="form-group"><label>${lab}</label><select name="${nm}">${x.opts.map(o=>`<option value="${o[0]}"${o[0]===L.v[x.k]?" selected":""}>${o[1]}</option>`).join("")}</select></div>`;
+  }).join("\n      ");
+  const q=s=>s.replace(/`/g,"\\`");
+  return `// ${name} — CHAT FX 생성 (FVTT v13, DialogV2)
+// 레이어: ${layers.map(l=>byId(l.id).name).join(" + ")}${anim&&!inl?"\n// ⚠ 애니메이션 포함: chat-fx 모듈이 활성화돼 있어야 움직입니다":""}
+(async () => {
+  const f = await askInput();
+  if (!f || !f.text) return;
+  const raw = ${$("#esc").checked?"foundry.utils.escapeHTML(f.text)":"f.text"};
+  const text = ${mods.has("spark")?`"✦ " + raw + " ✦"`:"raw"};
+  const n = (text.match(/&[a-zA-Z#0-9]+;|[^\\n]/g) || []).length || 1;
+  const content = \`${q(inl)}${q(tpl)}\`;
+  const data = { content, speaker: ${speaker}, style: CONST.CHAT_MESSAGE_STYLES.${st} };${wh?`
+  if (f.whisper?.length) data.whisper = f.whisper;`:""}
+  ChatMessage.create(data);
+})();
+
+async function askInput() {
+  return foundry.applications.api.DialogV2.prompt({
+    window: { title: "${name}" },
+    content: \`<form class="flexcol">
+      ${fields}
+      <div class="form-group"><textarea name="text" rows="4" placeholder="입력하기" style="width:100%"></textarea></div>${wh?`
+      <div class="form-group"><label>귓속말 대상 (비우면 전체)</label><select name="whisper" multiple size="4">\${game.users.filter(u => u.id !== game.user.id).map(u => \`<option value="\${u.id}">\${u.name}</option>\`).join("")}</select></div>`:""}
+    </form>\`,
+    ok: { label: "보내기", callback: (event, button) => {
+      const fd = new FormData(button.form);
+      const o = Object.fromEntries(fd.entries());${wh?`
+      o.whisper = fd.getAll("whisper");`:""}
+      return o;
+    }},
+    rejectClose: false,
+  });
+}${hasChar?`
+
+// 글자별 <span> 분할 — &quot; 같은 HTML 엔티티는 한 글자로 취급 (줄바꿈은 <br>, 공백은 &nbsp;)
+function spanize(text, fn) {
+  let i = 0;
+  return (text.match(/&[a-zA-Z#0-9]+;|\\n|[\\s\\S]/g) || []).map(ch => ch === "\\n" ? "<br>" : \`<span style="display:inline-block;\${fn(i++)}">\${ch === " " ? "&nbsp;" : ch}</span>\`).join("");
+}`:""}`;
+}
+function injectCode(){
+  return `// GM 주입 매크로 — chat-fx 모듈 CSS를 이 클라이언트에 즉시 적용 (새로고침 시 재실행 필요)
+(() => {
+  document.getElementById("chat-fx-inline")?.remove();
+  const s = document.createElement("style");
+  s.id = "chat-fx-inline";
+  s.textContent = \`${MODULE_CSS.replace(/`/g,"\\`")}\`;
+  document.head.append(s);
+  ui.notifications.info("CHAT FX 스타일 적용됨");
+})();`;
+}
+
+/* ===================== seed ===================== */
+function makeSeed(){
+  const o={L:layers.map(l=>({id:l.id,v:l.v,rt:Object.keys(l.rt).filter(k=>l.rt[k])})),m:[...mods],f:+$("#fsz").value,l:+$("#lh").value,a:$("#align").value,s:$("#speaker").value,t:$("#style").value,n:$("#mName").value,k:[$("#keepFont").checked,$("#keepSize").checked,$("#noBg").checked,+$("#fxScale").value]};
+  return "cfx2:"+btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+}
+function loadSeed(s){
+  try{const o=JSON.parse(decodeURIComponent(escape(atob(s.replace(/^cfx2:/,"")))));
+    layers=o.L.filter(l=>byId(l.id)).map(l=>({id:l.id,v:{...defaults(byId(l.id)),...l.v},rt:Object.fromEntries(byId(l.id).p.map(x=>[x.k,(l.rt||[]).includes(x.k)]))}));
+    mods=new Set(o.m||[]);$("#fsz").value=o.f;$("#lh").value=o.l;$("#align").value=o.a||"";$("#speaker").value=o.s;$("#style").value=o.t;if(o.n)$("#mName").value=o.n;if(o.k){$("#keepFont").checked=o.k[0];$("#keepSize").checked=o.k[1];$("#noBg").checked=o.k[2];if(o.k[3]){$("#fxScale").value=o.k[3];$("#fxScaleV").textContent=o.k[3]+"%";}}
+    $("#fszV").textContent=o.f+"px";$("#lhV").textContent=o.l;rebuild();toast("시드에서 복원됨");
+  }catch(e){toast("시드를 읽을 수 없어요");}
+}
+$("#seedCopy").onclick=()=>copy($("#seed").value);
+$("#seedPaste").onclick=()=>{const s=prompt("시드를 붙여넣기");if(s)loadSeed(s.trim());};
+
+/* ===================== shuffle / random ===================== */
+const rnd=(a,b,st=1)=>+(Math.round((a+Math.random()*(b-a))/st)*st).toFixed(2);
+const rndColor=()=>"#"+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,"0");
+function shuffle(){layers.forEach(L=>byId(L.id).p.forEach(x=>{L.v[x.k]=x.t==="range"?rnd(x.min,x.max,x.step):x.t==="color"?rndColor():x.t==="select"?x.opts[Math.floor(Math.random()*x.opts.length)][0]:L.v[x.k]}));buildLayers();update();}
+$("#btnShuffle").onclick=shuffle;
+$("#btnRandom").onclick=()=>{
+  const pick=k=>{const c=FX.filter(f=>f.id&&f.kind===k);return c[Math.floor(Math.random()*c.length)]};
+  layers=[];const t=pick(Math.random()<.5?"text":"char");layers.push({id:t.id,v:defaults(t),rt:defaultRt(t)});
+  if(Math.random()<.6){const a=pick("anim");layers.push({id:a.id,v:defaults(a),rt:defaultRt(a)});}
+  if(Math.random()<.4){const w=pick("wrap");layers.push({id:w.id,v:defaults(w),rt:defaultRt(w)});}
+  rebuild();shuffle();
+};
+
+/* ===================== misc ===================== */
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1300);}
+function copy(s){navigator.clipboard.writeText(s).then(()=>toast("복사됨"),()=>toast("복사 실패 — 직접 선택해 주세요"));}
+document.querySelectorAll(".cp").forEach(b=>b.onclick=()=>copy($("#"+b.dataset.copy).textContent));
+$("#dlModule").onclick=()=>copy(MODULE_JSON);$("#dlCss").onclick=()=>copy(MODULE_CSS);
+{const base=location.href.replace(/[#?].*$/,"").replace(/index\.html$/,"");$("#manifestUrl").value=location.protocol.startsWith("http")?base+"module/module.json":"(GitHub Pages에 올린 뒤 이 자리에 매니페스트 URL이 표시됩니다)";$("#manifestCopy").onclick=()=>copy($("#manifestUrl").value);}
+document.querySelectorAll("[data-theme]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-theme]").forEach(x=>x.classList.toggle("on",x===b));$("#stage").className="stage "+b.dataset.theme;});
+["#sample","#fsz","#lh","#align","#mName","#speaker","#style","#prewrap","#esc","#whisper","#inlineStyle","#keepFont","#keepSize","#noBg","#fxScale"].forEach(s=>$(s).addEventListener("input",()=>{$("#fszV").textContent=$("#fsz").value+"px";$("#lhV").textContent=$("#lh").value;$("#fxScaleV").textContent=$("#fxScale").value+"%";update();}));
+$("#pvBase").addEventListener("input",()=>{$("#stage").style.setProperty("--pv-base",$("#pvBase").value+"px");});
+
+setSingle("neon");
+</script>
+</body>
+</html>

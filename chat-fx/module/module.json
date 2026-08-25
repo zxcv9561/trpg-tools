@@ -1,0 +1,12 @@
+{
+  "id": "chat-fx",
+  "title": "Chat FX — 채팅 텍스트 효과",
+  "description": "CHAT FX 생성기(https://zxcv9561.github.io/trpg-tools/chat-fx/)로 만든 채팅 애니메이션 효과용 스타일시트. 값은 메시지 인라인 CSS 변수로 전달되므로 한 번만 설치하면 됩니다.",
+  "version": "1.0.1",
+  "authors": [{ "name": "zxcv9561" }],
+  "url": "https://zxcv9561.github.io/trpg-tools/chat-fx/",
+  "manifest": "https://zxcv9561.github.io/trpg-tools/chat-fx/module/module.json",
+  "download": "https://zxcv9561.github.io/trpg-tools/chat-fx/module/chat-fx.zip",
+  "compatibility": { "minimum": "12", "verified": "13" },
+  "styles": ["chat-fx.css"]
+}

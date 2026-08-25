@@ -1,0 +1,70 @@
+/* CHAT FX — Foundry VTT 채팅 효과 모듈 CSS
+   모든 값은 메시지 인라인 CSS 변수(--fx-*)로 들어옵니다. 클래스가 제거되는 환경을 위해 [style*=] 속성 선택자를 함께 둡니다. 이 파일은 바꾸지 않아도 됩니다. */
+
+@keyframes cfx-in{to{opacity:1}}
+@keyframes cfx-blink{50%{opacity:0}}
+
+/* 타자기 */
+.cfx-type>span,[style*="--fx-type-"] [style*="--cfx:1"]>span{opacity:0;animation:cfx-in .01s forwards;animation-delay:calc(var(--fx-type-sp,70ms)*var(--i))}
+.cfx-type>.cfx-cursor,[style*="--fx-type-"] [style*="--cfx:1"]>span:last-child{opacity:0;animation:cfx-in .01s forwards,cfx-blink 1s step-end infinite;animation-delay:calc(var(--fx-type-sp,70ms)*var(--n)),calc(var(--fx-type-sp,70ms)*var(--n))}
+/* 글자 낙하 등장 */
+.cfx-drop>span,[style*="--fx-drop-"] [style*="--cfx:1"]>span{opacity:0;animation:cfx-drop .5s ease-out forwards;animation-delay:calc(var(--fx-drop-sp,60ms)*var(--i))}
+@keyframes cfx-drop{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:none}}
+/* 흔들림 */
+.cfx-shake,[style*="--fx-shake-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-shake var(--fx-shake-spd,120ms) infinite}
+@keyframes cfx-shake{0%,100%{transform:none}25%{transform:translate(var(--fx-shake-amp,3px),calc(var(--fx-shake-amp,3px)*-.5))}50%{transform:translate(calc(var(--fx-shake-amp,3px)*-1),calc(var(--fx-shake-amp,3px)*.5))}75%{transform:translate(calc(var(--fx-shake-amp,3px)*.5),var(--fx-shake-amp,3px))}}
+/* 떨림 */
+.cfx-jitter>span,[style*="--fx-jitter-"] [style*="--cfx:1"]>span{animation:cfx-jitter .4s infinite;animation-delay:calc(var(--i)*-137ms)}
+@keyframes cfx-jitter{0%,100%{transform:none}33%{transform:translate(var(--fx-jitter-amp,1px),calc(var(--fx-jitter-amp,1px)*-1))}66%{transform:translate(calc(var(--fx-jitter-amp,1px)*-1),var(--fx-jitter-amp,1px))}}
+/* 형광등 깜빡임 */
+.cfx-flicker,[style*="--fx-flicker-"] [style*="--cfx:1"]{animation:cfx-flicker var(--fx-flicker-spd,1800ms) infinite}
+@keyframes cfx-flicker{0%,19%,21%,23%,25%,54%,56%,100%{opacity:1}20%,24%,55%{opacity:.15}}
+/* 글리치 */
+.cfx-glitch,[style*="--fx-glitch-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-glitch var(--fx-glitch-spd,700ms) infinite steps(1)}
+@keyframes cfx-glitch{0%{text-shadow:var(--fx-glitch-d,3px) 0 var(--fx-glitch-a,#f0f),calc(var(--fx-glitch-d,3px)*-1) 0 var(--fx-glitch-b,#0ff)}20%{text-shadow:calc(var(--fx-glitch-d,3px)*-1) 0 var(--fx-glitch-a,#f0f),var(--fx-glitch-d,3px) 0 var(--fx-glitch-b,#0ff);transform:skewX(3deg)}40%{text-shadow:var(--fx-glitch-d,3px) var(--fx-glitch-d,3px) var(--fx-glitch-a,#f0f),calc(var(--fx-glitch-d,3px)*-1) calc(var(--fx-glitch-d,3px)*-1) var(--fx-glitch-b,#0ff)}60%{text-shadow:none;transform:none}80%{text-shadow:calc(var(--fx-glitch-d,3px)*-2) 0 var(--fx-glitch-a,#f0f),calc(var(--fx-glitch-d,3px)*2) 0 var(--fx-glitch-b,#0ff);transform:translateX(var(--fx-glitch-d,3px))}100%{text-shadow:none}}
+/* 맥동 글로우 */
+.cfx-pulse,[style*="--fx-pulse-"] [style*="--cfx:1"]{animation:cfx-pulse var(--fx-pulse-spd,1200ms) ease-in-out infinite}
+@keyframes cfx-pulse{0%,100%{text-shadow:0 0 2px var(--fx-pulse-c,#f22)}50%{text-shadow:0 0 14px var(--fx-pulse-c,#f22),0 0 26px var(--fx-pulse-c,#f22)}}
+/* 심장박동(크기) */
+.cfx-beat,[style*="--fx-beat-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-beat var(--fx-beat-spd,1000ms) ease-in-out infinite}
+@keyframes cfx-beat{0%,100%{transform:scale(1)}15%{transform:scale(1.15)}30%{transform:scale(1)}45%{transform:scale(1.08)}}
+/* 물결 */
+.cfx-wave>span,[style*="--fx-wave-"] [style*="--cfx:1"]>span{animation:cfx-wave var(--fx-wave-spd,1400ms) ease-in-out infinite;animation-delay:calc(var(--i)*-80ms)}
+@keyframes cfx-wave{0%,100%{transform:translateY(0)}50%{transform:translateY(calc(var(--fx-wave-amp,5px)*-1))}}
+/* 무지개 순환 */
+.cfx-rainbow,[style*="--fx-rainbow-"] [style*="--cfx:1"]{animation:cfx-rainbow var(--fx-rainbow-spd,3000ms) linear infinite}
+@keyframes cfx-rainbow{to{filter:hue-rotate(360deg)}}
+/* 페이드인 */
+.cfx-fadein,[style*="--fx-fadein-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-fadein var(--fx-fadein-dur,1500ms) ease-out both}
+@keyframes cfx-fadein{from{opacity:0;transform:translateY(var(--fx-fadein-y,10px))}to{opacity:1;transform:none}}
+/* 흐림→선명 */
+.cfx-unblur,[style*="--fx-unblur-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-unblur var(--fx-unblur-dur,2500ms) ease-out both}
+@keyframes cfx-unblur{from{filter:blur(8px);opacity:.3}to{filter:blur(0);opacity:1}}
+/* 선명→흐림 (의식 잃음) */
+.cfx-blurout,[style*="--fx-blurout-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-blurout var(--fx-blurout-dur,3000ms) ease-in both}
+@keyframes cfx-blurout{from{filter:blur(0);opacity:1}to{filter:blur(6px);opacity:.15}}
+/* 회전 */
+.cfx-spin,[style*="--fx-spin-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-spin var(--fx-spin-spd,3000ms) linear infinite}
+@keyframes cfx-spin{to{transform:rotate(360deg)}}
+/* 숨쉬기 */
+.cfx-breathe,[style*="--fx-breathe-"] [style*="--cfx:1"]{animation:cfx-breathe var(--fx-breathe-spd,3000ms) ease-in-out infinite}
+@keyframes cfx-breathe{0%,100%{opacity:1}50%{opacity:var(--fx-breathe-min,.35)}}
+/* 불타는 글자 */
+.cfx-burn,[style*="--fx-burn-"] [style*="--cfx:1"]{display:inline-block;background:linear-gradient(0deg,#ff2d00,#ffb100,#fff3a0,#ffb100,#ff2d00);background-size:100% 300%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:cfx-burn var(--fx-burn-spd,1200ms) linear infinite}
+@keyframes cfx-burn{to{background-position:0 300%}}
+/* 마퀴(흐르는 자막) */
+.cfx-marquee,[style*="--fx-marquee-"] [style*="--cfx:1"]{display:block;overflow:hidden;white-space:nowrap}
+.cfx-marquee>span,[style*="--fx-marquee-"] [style*="--cfx:1"]>span{display:inline-block;padding-left:100%;animation:cfx-marquee var(--fx-marquee-spd,8000ms) linear infinite}
+@keyframes cfx-marquee{to{transform:translateX(-100%)}}
+/* 스캔라인 오버레이 */
+.cfx-scan,[style*="--fx-scan-"] [style*="--cfx:1"]{position:relative;display:block}
+.cfx-scan::after,[style*="--fx-scan-"] [style*="--cfx:1"]::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,var(--fx-scan-op,.25)) 2px 4px);animation:cfx-scan var(--fx-scan-spd,600ms) linear infinite}
+@keyframes cfx-scan{to{background-position:0 8px}}
+/* 물에 젖음(아래로 번짐) */
+.cfx-drip,[style*="--fx-drip-"] [style*="--cfx:1"]{display:inline-block;animation:cfx-drip var(--fx-drip-dur,4000ms) ease-in both}
+@keyframes cfx-drip{from{text-shadow:0 0 0 currentColor;filter:none}to{text-shadow:0 10px 12px currentColor,0 18px 20px color-mix(in srgb,currentColor 50%,transparent);filter:blur(.6px)}}
+/* 지직거림 정적 배경 */
+.cfx-static,[style*="--fx-static-"] [style*="--cfx:1"]{position:relative;display:block}
+.cfx-static::before,[style*="--fx-static-"] [style*="--cfx:1"]::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:var(--fx-static-op,.18);background:repeating-radial-gradient(circle at 30% 40%,#000 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,#000 0 1px,transparent 1px 2px);animation:cfx-static var(--fx-static-spd,120ms) steps(2) infinite}
+@keyframes cfx-static{0%{transform:translate(0,0)}25%{transform:translate(-3px,2px)}50%{transform:translate(2px,-3px)}75%{transform:translate(-1px,-1px)}100%{transform:translate(3px,1px)}}
+@media (prefers-reduced-motion:reduce){[class*="cfx-"],[class*="cfx-"]>span,[class*="cfx-"]::before,[class*="cfx-"]::after{animation-duration:.001s!important;animation-iteration-count:1!important}}
