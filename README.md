@@ -4,6 +4,7 @@
 
 - 홈: https://zxcv9561.github.io/trpg-tools/
 - **판정 확률 계산기** (파뷸라 울티마): https://zxcv9561.github.io/trpg-tools/calc/
+- **핸드아웃 스튜디오** (범용): https://zxcv9561.github.io/trpg-tools/handout/
 - **CHAT FX** (Foundry VTT 채팅 효과 매크로 생성기): https://zxcv9561.github.io/trpg-tools/chat-fx/
   - chat-fx 모듈 매니페스트: `https://zxcv9561.github.io/trpg-tools/chat-fx/module/module.json`
     (Foundry 설정 → 모듈 설치 → 매니페스트 URL에 붙여넣기)
@@ -12,6 +13,7 @@
 ```
 index.html                    # 랜딩
 calc/index.html               # 판정 확률 계산기
+handout/index.html            # 핸드아웃 스튜디오
 chat-fx/index.html            # CHAT FX 생성기
 chat-fx/module/module.json    # Foundry 모듈 매니페스트
 chat-fx/module/chat-fx.css    # 모듈 스타일시트
