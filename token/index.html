@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>토큰 메이커 — TRPG Tools Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --abyss:#070B16; --deep:#0D1426; --panel:#16203A; --raised:#1F2C4D; --hover:#2A3A63;
+  --text:#F2EBD9; --sub:#B9B2A0; --muted:#7E7A6E; --on-gold:#1A1204;
+  --gold-bright:#F6E3A6; --gold:#D9B45B; --gold-deep:#9A7526; --rose:#E5556E; --success:#6FBF73;
+  --display:'Gowun Batang',serif; --latin:'Cinzel',serif;
+  --body:'Pretendard Variable',Pretendard,system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--body);font-size:14px;line-height:1.6;color:var(--text);background:var(--abyss);min-height:100vh;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(900px 500px at 50% -10%,rgba(76,139,245,.14),transparent 70%),
+             radial-gradient(700px 400px at 50% 110%,rgba(217,180,91,.07),transparent 70%)}
+header{position:relative;z-index:1;display:flex;align-items:baseline;gap:14px;padding:14px 22px;border-bottom:1px solid var(--hover)}
+header h1{font-family:var(--display);font-size:19px;color:var(--gold-bright)}
+header .eyebrow{font-family:var(--latin);font-size:10px;letter-spacing:.16em;color:var(--gold)}
+main{position:relative;z-index:1;display:grid;grid-template-columns:1fr 320px;min-height:calc(100vh - 53px)}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.col{padding:16px;overflow:auto}
+.col-r{background:var(--panel);border-left:1px solid var(--hover)}
+h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px;font-weight:600}
+h2:first-child{margin-top:0}
+button{font:inherit;cursor:pointer}
+input[type=text],select{font:inherit;background:var(--deep);border:1px solid var(--hover);color:var(--text);border-radius:6px;padding:7px 9px;width:100%}
+input:focus,select:focus{outline:none;box-shadow:0 0 0 2px rgba(76,139,245,.9)}
+input[type=range]{width:100%;accent-color:var(--gold)}
+input[type=color]{width:100%;height:30px;border:1px solid var(--hover);background:var(--deep);border-radius:6px;padding:2px;cursor:pointer}
+.btn{font-size:13px;font-weight:600;border:0;border-radius:6px;padding:9px 14px;background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:var(--on-gold)}
+.btn.ghost{background:transparent;border:1px solid var(--gold-deep);color:var(--gold)}
+.btn:hover{filter:brightness(1.08)}
+.row{display:grid;grid-template-columns:74px 1fr 40px;gap:8px;align-items:center;margin:6px 0;font-size:12px;color:var(--sub)}
+.row .v{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--gold-bright);text-align:right}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}
+.stage{display:flex;flex-direction:column;align-items:center;gap:12px}
+.cwrap{position:relative;border-radius:10px;padding:16px;
+  background:repeating-conic-gradient(#20263a 0 25%,#181d2e 0 50%) 0 0/22px 22px;border:1px solid var(--hover)}
+#pv{display:block;cursor:grab;touch-action:none}
+#pv.drag{cursor:grabbing}
+.hintline{font-size:11.5px;color:var(--muted)}
+.gallery{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:560px}
+.thumb{width:64px;height:64px;border-radius:50%;border:2px solid var(--hover);cursor:pointer;background-size:cover;background-position:center;position:relative}
+.thumb.on{border-color:var(--gold);box-shadow:0 0 10px rgba(217,180,91,.4)}
+.thumb .x{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:0;background:var(--rose);color:#fff;font-size:10px;line-height:1;display:none}
+.thumb:hover .x{display:block}
+.drop{border:2px dashed var(--hover);border-radius:10px;padding:26px;text-align:center;color:var(--muted);font-size:13px;width:100%;max-width:560px;transition:.15s}
+.drop.over{border-color:var(--gold);color:var(--gold-bright);background:rgba(217,180,91,.05)}
+.drop input{display:none}
+.dl-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.dl-row .btn{flex:1}
+.ptoast{font-size:12px;color:var(--success);margin-top:8px;min-height:16px;transition:opacity .3s}
+.f{display:block;margin-bottom:8px}
+.lbl{display:block;font-size:11px;letter-spacing:.06em;color:var(--sub);margin-bottom:4px}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="eyebrow">TRPG Tools Lab</div><h1>토큰 메이커</h1></div>
+</header>
+<main>
+  <section class="col stage">
+    <label class="drop" id="drop">
+      이미지를 끌어다 놓거나 클릭해서 선택 — 여러 장이면 같은 테마로 일괄 처리
+      <input type="file" id="file" accept="image/*" multiple>
+    </label>
+    <div class="gallery" id="gallery"></div>
+    <div class="cwrap"><canvas id="pv" width="440" height="440"></canvas></div>
+    <div class="hintline">드래그: 위치 · 휠/핀치: 확대 — 원 밖은 투명으로 저장됩니다</div>
+  </section>
+
+  <section class="col col-r">
+    <h2>테두리</h2>
+    <label class="f"><span class="lbl">스타일</span>
+      <select id="ring">
+        <option value="metal" selected>금속 (입체 베벨)</option>
+        <option value="double">이중 세선 (우아함)</option>
+        <option value="rune">룬 각인</option>
+        <option value="circle">마법진</option>
+        <option value="sigil">시스템 문양</option>
+        <option value="plain">단색 밴드</option>
+        <option value="none">없음 (원형 크롭만)</option>
+      </select></label>
+    <div class="row2">
+      <label class="f"><span class="lbl">테두리 색</span><input type="color" id="ringCol" value="#D9B45B"></label>
+      <label class="f"><span class="lbl">보조 색 (음영)</span><input type="color" id="ringCol2" value="#6b5210"></label>
+    </div>
+    <div class="row"><span>두께</span><input type="range" id="ringW" min="3" max="14" value="7"><span class="v" id="ringWV">7%</span></div>
+
+    <h2>진영 · 분위기</h2>
+    <div class="row2">
+      <label class="f"><span class="lbl">외곽 글로우</span>
+        <select id="glow"><option value="off" selected>끔</option><option value="on">켬</option></select></label>
+      <label class="f"><span class="lbl">글로우 색</span><input type="color" id="glowCol" value="#4C8BF5"></label>
+    </div>
+    <div class="row"><span>안쪽 그림자</span><input type="range" id="vig" min="0" max="60" value="22"><span class="v" id="vigV">22%</span></div>
+    <div class="row"><span>채도</span><input type="range" id="sat" min="0" max="160" value="100"><span class="v" id="satV">100%</span></div>
+
+    <h2>이름 배너</h2>
+    <label class="f"><input type="text" id="name" placeholder="비우면 배너 없음" maxlength="16"></label>
+    <div class="row2">
+      <label class="f"><span class="lbl">배너 색</span><input type="color" id="bnCol" value="#1a1204"></label>
+      <label class="f"><span class="lbl">글자 색</span><input type="color" id="bnTxt" value="#F6E3A6"></label>
+    </div>
+
+    <h2>이미지 조정</h2>
+    <div class="row"><span>확대</span><input type="range" id="zoom" min="30" max="400" value="100"><span class="v" id="zoomV">100%</span></div>
+    <div class="row"><span>회전</span><input type="range" id="rot" min="-180" max="180" value="0"><span class="v" id="rotV">0°</span></div>
+    <div class="dl-row"><button class="btn ghost" id="fitBtn" style="flex:1">화면에 맞춤</button><button class="btn ghost" id="centerBtn" style="flex:1">가운데로</button></div>
+
+    <h2>내보내기</h2>
+    <label class="f"><span class="lbl">크기</span>
+      <select id="size"><option value="256">256 px</option><option value="512" selected>512 px (권장)</option><option value="1024">1024 px</option></select></label>
+    <div class="dl-row">
+      <button class="btn" id="dlOne">이 토큰 PNG</button>
+      <button class="btn ghost" id="dlAll">전체 저장</button>
+    </div>
+    <div class="ptoast" id="ptoast"></div>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id);};
+var toastTimer;
+function toast(m,bad){var el=$('ptoast');el.textContent=m;el.style.color=bad?'var(--rose)':'var(--success)';el.style.opacity=1;
+  clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.style.opacity=0;},2800);}
+var RUNES='ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ';
+
+/* ---------- state ---------- */
+var tokens=[],cur=-1;   // token: {img, name?, view:{zoom,rot,ox,oy}}  ox/oy in ref-512 px
+var G={};               // global style, read from controls
+function readG(){
+  G={ring:$('ring').value,ringCol:$('ringCol').value,ringCol2:$('ringCol2').value,ringW:+$('ringW').value,
+     glow:$('glow').value==='on',glowCol:$('glowCol').value,vig:+$('vig').value,sat:+$('sat').value,
+     name:$('name').value.trim(),bnCol:$('bnCol').value,bnTxt:$('bnTxt').value};
+}
+function tok(){return tokens[cur]||null;}
+
+/* ---------- rendering (size-independent, ref=512) ---------- */
+function hexA(hex,a){var n=parseInt(hex.slice(1),16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')';}
+function shade(hex,f){ // lighten(f>0)/darken(f<0)
+  var n=parseInt(hex.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;
+  function c(x){x=f>0?x+(255-x)*f:x*(1+f);return Math.max(0,Math.min(255,Math.round(x)));}
+  return 'rgb('+c(r)+','+c(g)+','+c(b)+')';
+}
+function render(canvas,S,t,g){
+  var x=canvas.getContext('2d');
+  canvas.width=S;canvas.height=S;
+  x.clearRect(0,0,S,S);
+  if(!t){ // empty placeholder
+    x.fillStyle='#1b2136';x.beginPath();x.arc(S/2,S/2,S*.46,0,7);x.fill();
+    x.fillStyle='#39415f';x.font=(S*.06)+'px sans-serif';x.textAlign='center';
+    x.fillText('이미지를 올려주세요',S/2,S/2+S*.02);
+    return;
+  }
+  var k=S/512;                       // ref scale
+  var rw=g.ring==='none'?0:512*g.ringW/100;   // ring width in ref px
+  var R=512*.48;                      // outer radius(ref)
+  var imgR=R-(g.ring==='none'?0:rw*.55);
+  // glow
+  if(g.glow){
+    x.save();x.shadowColor=g.glowCol;x.shadowBlur=S*.05;
+    x.fillStyle=g.glowCol;x.globalAlpha=.9;
+    x.beginPath();x.arc(S/2,S/2,(R-1)*k,0,7);x.fill();
+    x.beginPath();x.arc(S/2,S/2,(R-1)*k,0,7);x.fill();
+    x.restore();x.globalAlpha=1;
+  }
+  // image clipped
+  x.save();
+  x.beginPath();x.arc(S/2,S/2,imgR*k,0,7);x.clip();
+  x.fillStyle='#101423';x.fillRect(0,0,S,S);
+  if(g.sat!==100)x.filter='saturate('+g.sat+'%)';
+  var im=t.img,v=t.view;
+  var base=Math.max(512/im.width,512/im.height); // cover at ref
+  var sc=base*v.zoom/100*k;
+  x.translate(S/2+v.ox*k,S/2+v.oy*k);
+  x.rotate(v.rot*Math.PI/180);
+  x.drawImage(im,-im.width*sc/2,-im.height*sc/2,im.width*sc,im.height*sc);
+  x.filter='none';
+  x.restore();
+  // vignette
+  if(g.vig>0){
+    x.save();x.beginPath();x.arc(S/2,S/2,imgR*k,0,7);x.clip();
+    var vg=x.createRadialGradient(S/2,S/2,imgR*k*.55,S/2,S/2,imgR*k);
+    vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,'+(g.vig/100)+')');
+    x.fillStyle=vg;x.fillRect(0,0,S,S);x.restore();
+  }
+  // name banner (inside crop bottom)
+  if(g.name){
+    x.save();x.beginPath();x.arc(S/2,S/2,imgR*k,0,7);x.clip();
+    var bh=Math.max(26*k,S*.105);
+    var bot=S/2+imgR*k;                 // 이미지 원의 바닥
+    x.fillStyle=g.bnCol;x.globalAlpha=.88;
+    x.fillRect(0,bot-bh,S,bh+2);
+    x.globalAlpha=1;
+    x.fillStyle=g.bnTxt;
+    x.font='700 '+Math.round(bh*.5)+'px "Gowun Batang","Nanum Myeongjo",serif';
+    x.textAlign='center';x.textBaseline='middle';
+    x.fillText(g.name,S/2,bot-bh*.52);
+    x.restore();
+  }
+  // ring
+  if(g.ring!=='none')drawRing(x,S,k,R,rw,g);
+}
+function ringPath(x,S,k,r){x.beginPath();x.arc(S/2,S/2,r*k,0,7);}
+function drawRing(x,S,k,R,rw,g){
+  var c=g.ringCol,c2=g.ringCol2,mid=R-rw/2;
+  x.lineCap='round';
+  if(g.ring==='metal'){
+    var gr=x.createLinearGradient(0,(mid-rw)*k,0,(mid+rw)*k+S/2);
+    gr.addColorStop(0,shade(c,.45));gr.addColorStop(.5,c);gr.addColorStop(1,c2);
+    x.strokeStyle=gr;x.lineWidth=rw*k;ringPath(x,S,k,mid);x.stroke();
+    x.strokeStyle='rgba(255,255,255,.55)';x.lineWidth=1.6*k;ringPath(x,S,k,R-1);x.stroke();
+    x.strokeStyle=shade(c2,-.4);x.lineWidth=1.8*k;ringPath(x,S,k,R-rw+1);x.stroke();
+    // top highlight arc
+    x.strokeStyle='rgba(255,255,255,.35)';x.lineWidth=rw*k*.28;
+    x.beginPath();x.arc(S/2,S/2,mid*k,-2.4,-0.7);x.stroke();
+  }
+  else if(g.ring==='double'){
+    x.strokeStyle=c;x.lineWidth=rw*k*.34;ringPath(x,S,k,R-rw*.2);x.stroke();
+    x.strokeStyle=c;x.lineWidth=rw*k*.14;ringPath(x,S,k,R-rw*.82);x.stroke();
+    x.strokeStyle=c2;x.lineWidth=1.2*k;ringPath(x,S,k,R-rw*.5);x.stroke();
+  }
+  else if(g.ring==='rune'){
+    x.strokeStyle=c2;x.lineWidth=rw*k;ringPath(x,S,k,mid);x.stroke();
+    x.strokeStyle=shade(c2,.25);x.lineWidth=1.4*k;ringPath(x,S,k,R-1);x.stroke();
+    x.strokeStyle=shade(c2,-.35);x.lineWidth=1.4*k;ringPath(x,S,k,R-rw+1);x.stroke();
+    x.fillStyle=c;x.font='700 '+Math.round(rw*k*.58)+'px "Gowun Batang",serif';
+    x.textAlign='center';x.textBaseline='middle';
+    var n=Math.max(28,Math.round(2*Math.PI*mid/(rw*.78)));   // 촘촘히: 둘레 기준 자동 개수
+    for(var i=0;i<n;i++){
+      var a=i/n*Math.PI*2-Math.PI/2;
+      x.save();x.translate(S/2+Math.cos(a)*mid*k,S/2+Math.sin(a)*mid*k);
+      x.rotate(a+Math.PI/2);
+      x.globalAlpha=.92;
+      x.fillText(RUNES[(i*7)%RUNES.length],0,1*k);
+      x.restore();
+    }
+    x.globalAlpha=1;
+    // 각인 구분 점
+    x.fillStyle=shade(c,-.15);
+    for(var id2=0;id2<n;id2++){
+      var ad=(id2+0.5)/n*Math.PI*2-Math.PI/2;
+      x.beginPath();x.arc(S/2+Math.cos(ad)*(R-2)*k,S/2+Math.sin(ad)*(R-2)*k,0.9*k,0,7);x.fill();
+    }
+  }
+  else if(g.ring==='circle'){ // 마법진
+    var g1=x.createRadialGradient(S/2,S/2,(R-rw)*k,S/2,S/2,R*k);
+    g1.addColorStop(0,'rgba(0,0,0,0)');g1.addColorStop(.6,hexA(c,.10));g1.addColorStop(1,hexA(c,.28));
+    x.fillStyle=g1;ringPath(x,S,k,R);x.fill();
+    x.shadowColor=c;x.shadowBlur=5*k;
+    // 바깥·안쪽 이중 원
+    x.strokeStyle=c;x.lineWidth=2.2*k;ringPath(x,S,k,R-1);x.stroke();
+    x.lineWidth=1.1*k;ringPath(x,S,k,R-rw*.22);x.stroke();
+    x.lineWidth=2*k;ringPath(x,S,k,R-rw+1);x.stroke();
+    // 회전 대칭 기하 문양: 교차 호
+    var n=8;
+    x.lineWidth=1.2*k;
+    for(var i2=0;i2<n;i2++){
+      var a2=i2/n*Math.PI*2;
+      var px=S/2+Math.cos(a2)*mid*k,py=S/2+Math.sin(a2)*mid*k;
+      x.beginPath();x.arc(px,py,rw*k*.62,0,7);x.stroke();
+    }
+    // 작은 별점 + 문자
+    x.fillStyle=c;
+    x.font='700 '+(rw*k*.72)+'px "Gowun Batang",serif';x.textAlign='center';x.textBaseline='middle';
+    var GLY='☉☽♂♀☿♃♄♁✶△▽✧';
+    for(var i3=0;i3<n;i3++){
+      var a3=(i3+0.5)/n*Math.PI*2;
+      var qx=S/2+Math.cos(a3)*mid*k,qy=S/2+Math.sin(a3)*mid*k;
+      x.save();x.translate(qx,qy);x.rotate(a3+Math.PI/2);
+      x.fillText(GLY[i3%GLY.length],0,0);x.restore();
+    }
+    x.shadowBlur=0;
+    // 내접 다각형 힌트 (테두리 침범 없이 링 안쪽 선만)
+    x.strokeStyle=hexA(c,.32);x.lineWidth=1*k;
+    x.beginPath();
+    for(var i4=0;i4<=6;i4++){
+      var a4=i4/6*Math.PI*2-Math.PI/2;
+      var vx=S/2+Math.cos(a4)*(R-rw+2)*k,vy=S/2+Math.sin(a4)*(R-rw+2)*k;
+      i4?x.lineTo(vx,vy):x.moveTo(vx,vy);
+    }
+    x.stroke();
+  }
+  else if(g.ring==='sigil'){ // 시스템 문양: 사분점 장식 + 보석
+    x.strokeStyle=c2;x.lineWidth=rw*k*.62;ringPath(x,S,k,mid);x.stroke();
+    x.strokeStyle=shade(c2,.3);x.lineWidth=1.3*k;ringPath(x,S,k,R-1);x.stroke();
+    x.strokeStyle=shade(c2,-.35);x.lineWidth=1.3*k;ringPath(x,S,k,R-rw+1);x.stroke();
+    // 가는 금선 장식
+    x.strokeStyle=c;x.lineWidth=1*k;ringPath(x,S,k,mid+rw*.18);x.stroke();ringPath(x,S,k,mid-rw*.18);x.stroke();
+    // 4방위 다이아 보석 + 필리그리
+    for(var q=0;q<4;q++){
+      var aq=q*Math.PI/2-Math.PI/2;
+      var cx2=S/2+Math.cos(aq)*mid*k,cy2=S/2+Math.sin(aq)*mid*k;
+      x.save();x.translate(cx2,cy2);x.rotate(aq+Math.PI/2);
+      // 받침
+      x.fillStyle=c;
+      x.beginPath();x.moveTo(0,-rw*k*.95);x.lineTo(rw*k*.6,0);x.lineTo(0,rw*k*.95);x.lineTo(-rw*k*.6,0);x.closePath();x.fill();
+      x.strokeStyle=shade(c,-.35);x.lineWidth=1*k;x.stroke();
+      // 보석
+      var gj=x.createRadialGradient(-rw*k*.1,-rw*k*.1,0,0,0,rw*k*.42);
+      gj.addColorStop(0,'#ffffff');gj.addColorStop(.25,g.glowCol);gj.addColorStop(1,shade(g.glowCol,-.55));
+      x.fillStyle=gj;
+      x.beginPath();x.arc(0,0,rw*k*.38,0,7);x.fill();
+      x.strokeStyle=shade(c,-.4);x.stroke();
+      // 좌우 소용돌이 선
+      x.strokeStyle=c;x.lineWidth=1.1*k;
+      [1,-1].forEach(function(dd){
+        x.beginPath();
+        x.moveTo(dd*rw*k*.7,0);
+        x.quadraticCurveTo(dd*rw*k*1.6,-rw*k*.5,dd*rw*k*2.3,0);
+        x.quadraticCurveTo(dd*rw*k*1.7,rw*k*.35,dd*rw*k*1.35,0);
+        x.stroke();
+      });
+      x.restore();
+    }
+  }
+  else{ // plain
+    x.strokeStyle=c;x.lineWidth=rw*k;ringPath(x,S,k,mid);x.stroke();
+    x.strokeStyle=c2;x.lineWidth=1.4*k;ringPath(x,S,k,R-rw+1);x.stroke();
+  }
+}
+function redraw(){readG();render($('pv'),440,tok(),G);drawGallery();}
+
+/* ---------- gallery / files ---------- */
+function drawGallery(){
+  var h='';
+  tokens.forEach(function(t,i){
+    h+='<div class="thumb'+(i===cur?' on':'')+'" data-i="'+i+'" style="background-image:url('+t.thumb+')"><button class="x" data-x="'+i+'">✕</button></div>';
+  });
+  $('gallery').innerHTML=h;
+}
+$('gallery').addEventListener('click',function(e){
+  var xb=e.target.closest('[data-x]');
+  if(xb){var i=+xb.getAttribute('data-x');tokens.splice(i,1);if(cur>=tokens.length)cur=tokens.length-1;redraw();syncView();return;}
+  var th=e.target.closest('[data-i]');if(!th)return;
+  cur=+th.getAttribute('data-i');syncView();redraw();
+});
+function addFiles(files){
+  Array.prototype.forEach.call(files,function(f){
+    if(!/^image\//.test(f.type))return;
+    var rd=new FileReader();
+    rd.onload=function(){
+      var im=new Image();
+      im.onload=function(){
+        var tc=document.createElement('canvas');tc.width=tc.height=64;
+        var tx=tc.getContext('2d');var s=Math.max(64/im.width,64/im.height);
+        tx.drawImage(im,32-im.width*s/2,32-im.height*s/2,im.width*s,im.height*s);
+        tokens.push({img:im,thumb:tc.toDataURL(),fname:f.name.replace(/\.[^.]+$/,''),view:{zoom:100,rot:0,ox:0,oy:0}});
+        cur=tokens.length-1;syncView();redraw();
+      };
+      im.src=rd.result;
+    };
+    rd.readAsDataURL(f);
+  });
+}
+$('file').addEventListener('change',function(){addFiles(this.files);this.value='';});
+['dragover','dragleave','drop'].forEach(function(ev){
+  $('drop').addEventListener(ev,function(e){
+    e.preventDefault();
+    this.classList.toggle('over',ev==='dragover');
+    if(ev==='drop')addFiles(e.dataTransfer.files);
+  });
+});
+
+/* ---------- pointer pan / wheel zoom ---------- */
+var drag=null,pv=$('pv');
+pv.addEventListener('pointerdown',function(e){
+  if(!tok())return;
+  drag={x:e.clientX,y:e.clientY,ox:tok().view.ox,oy:tok().view.oy};
+  pv.setPointerCapture(e.pointerId);pv.classList.add('drag');
+});
+pv.addEventListener('pointermove',function(e){
+  if(!drag||!tok())return;
+  var f=512/440;
+  tok().view.ox=drag.ox+(e.clientX-drag.x)*f;
+  tok().view.oy=drag.oy+(e.clientY-drag.y)*f;
+  redraw();
+});
+pv.addEventListener('pointerup',function(){drag=null;pv.classList.remove('drag');});
+pv.addEventListener('wheel',function(e){
+  if(!tok())return;e.preventDefault();
+  var v=tok().view;
+  v.zoom=Math.max(30,Math.min(400,v.zoom*(e.deltaY<0?1.07:0.93)));
+  $('zoom').value=Math.round(v.zoom);$('zoomV').textContent=Math.round(v.zoom)+'%';
+  redraw();
+},{passive:false});
+
+/* ---------- controls ---------- */
+['ring','ringCol','ringCol2','glow','glowCol','name','bnCol','bnTxt','size'].forEach(function(id){
+  $(id).addEventListener('input',redraw);
+});
+[['ringW','ringWV','%'],['vig','vigV','%'],['sat','satV','%']].forEach(function(a){
+  $(a[0]).addEventListener('input',function(){$(a[1]).textContent=this.value+a[2];redraw();});
+});
+$('zoom').addEventListener('input',function(){
+  if(tok())tok().view.zoom=+this.value;
+  $('zoomV').textContent=this.value+'%';redraw();
+});
+$('rot').addEventListener('input',function(){
+  if(tok())tok().view.rot=+this.value;
+  $('rotV').textContent=this.value+'°';redraw();
+});
+$('fitBtn').onclick=function(){if(!tok())return;var v=tok().view;v.zoom=100;v.ox=0;v.oy=0;v.rot=0;syncView();redraw();};
+$('centerBtn').onclick=function(){if(!tok())return;tok().view.ox=0;tok().view.oy=0;redraw();};
+function syncView(){
+  var v=tok()?tok().view:{zoom:100,rot:0};
+  $('zoom').value=v.zoom;$('zoomV').textContent=Math.round(v.zoom)+'%';
+  $('rot').value=v.rot;$('rotV').textContent=v.rot+'°';
+}
+
+/* ---------- export ---------- */
+function exportOne(t,cb){
+  readG();
+  var S=+$('size').value,c=document.createElement('canvas');
+  render(c,S,t,G);
+  c.toBlob(function(blob){cb(blob);},'image/png');
+}
+function dl(blob,name){
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
+}
+$('dlOne').onclick=function(){
+  var t=tok();if(!t){toast('먼저 이미지를 올려주세요.',true);return;}
+  exportOne(t,function(b){dl(b,'token-'+(G.name||t.fname||'1')+'.png');toast('투명 배경 PNG로 저장했습니다.');});
+};
+$('dlAll').onclick=function(){
+  if(!tokens.length){toast('먼저 이미지를 올려주세요.',true);return;}
+  var i=0;
+  (function next(){
+    if(i>=tokens.length){toast(tokens.length+'개 토큰을 모두 저장했습니다.');return;}
+    var t=tokens[i++];
+    exportOne(t,function(b){dl(b,'token-'+(t.fname||i)+'.png');setTimeout(next,420);});
+  })();
+};
+
+/* ---------- persist style ---------- */
+try{
+  var sv=JSON.parse(localStorage.getItem('token-maker-v1')||'null');
+  if(sv)Object.keys(sv).forEach(function(k){var el=$(k);if(el)el.value=sv[k];});
+  ['ringW','vig','sat'].forEach(function(id){$(id+'V').textContent=$(id).value+'%';});
+}catch(e){}
+setInterval(function(){
+  var o={};['ring','ringCol','ringCol2','ringW','glow','glowCol','vig','sat','bnCol','bnTxt','size'].forEach(function(k){o[k]=$(k).value;});
+  try{localStorage.setItem('token-maker-v1',JSON.stringify(o));}catch(e){}
+},1500);
+
+redraw();
+})();
+</script>
+</body>
+</html>

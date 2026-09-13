@@ -254,23 +254,6 @@ footer{text-align:center;color:var(--fu-text-muted);font-size:11px;margin-top:va
         <option value="5">인연 강도 5</option>
         <option value="6">인연 강도 6</option>
       </select></label>
-    <div>
-      <span class="lbl">협력 판정 (하우스룰)</span>
-      <label class="switch" id="coopSwitch"><input type="checkbox" id="coop"><span>다른 PC와 같이 굴리기</span></label>
-    </div>
-  </div>
-
-  <div class="sub">
-    <div class="sub-title">협력자 능력치</div>
-    <div class="grid g3">
-      <label class="f"><span class="lbl">협력자 능력치 1</span>
-        <select id="c1" disabled><option value="6">d6</option><option value="8" selected>d8</option><option value="10">d10</option><option value="12">d12</option></select></label>
-      <label class="f"><span class="lbl">협력자 능력치 2</span>
-        <select id="c2" disabled><option value="6">d6</option><option value="8" selected>d8</option><option value="10">d10</option><option value="12">d12</option></select></label>
-      <label class="f"><span class="lbl">협력자 보너스</span>
-        <input type="number" id="cbonus" value="0" step="1" min="-20" max="40" disabled></label>
-    </div>
-    <p class="note">두 사람이 같은 판정을 굴려 더 높은 판정값을 채택합니다. 어느 쪽이든 크리티컬이 나오면 그 결과가 우선합니다. 재굴림과 인연은 본인 판정에만 적용됩니다.</p>
   </div>
 </section>
 
@@ -298,7 +281,7 @@ footer{text-align:center;color:var(--fu-text-muted);font-size:11px;margin-top:va
 <section class="panel">
   <div class="panel-head"><h2>난이도별 성공률</h2></div>
   <div id="dlrows"></div>
-  <p class="note">현재 설정한 자원(재굴림·인연·협력)을 모두 반영한 값입니다. 선택 중인 난이도가 금색입니다.</p>
+  <p class="note">현재 설정한 자원(재굴림·인연)을 모두 반영한 값입니다. 선택 중인 난이도가 금색입니다.</p>
 </section>
 
 <section class="panel">
@@ -307,7 +290,7 @@ footer{text-align:center;color:var(--fu-text-muted);font-size:11px;margin-top:va
     <thead><tr><th>조합</th><th>성공률</th><th>증가</th><th>크리티컬</th><th>펌블</th></tr></thead>
     <tbody id="comborows"></tbody>
   </table>
-  <p class="note">인연 강도와 협력자 능력치는 위 설정을 그대로 씁니다. 파불라 포인트를 어디에 쓰는 게 이득인지 비교하는 표입니다.</p>
+  <p class="note">인연 강도는 위 설정을 그대로 씁니다. 파불라 포인트를 어디에 쓰는 게 이득인지 비교하는 표입니다.</p>
 </section>
 
 
@@ -327,9 +310,9 @@ footer{text-align:center;color:var(--fu-text-muted);font-size:11px;margin-top:va
     {k:'mig',n:'힘',en:'MIG'},{k:'wlp',n:'의지',en:'WLP'}
   ];
   var STATUSES=[
-    {k:'slow',n:'둔화',hits:['dex']},{k:'dazed',n:'혼미',hits:['ins']},
-    {k:'weak',n:'쇠약',hits:['mig']},{k:'shaken',n:'동요',hits:['wlp']},
-    {k:'enraged',n:'격노',hits:['dex','ins']},{k:'poisoned',n:'중독',hits:['mig','wlp']}
+    {k:'slow',n:'둔화',hits:['dex']},{k:'dazed',n:'멍함',hits:['ins']},
+    {k:'weak',n:'약화',hits:['mig']},{k:'shaken',n:'동요',hits:['wlp']},
+    {k:'enraged',n:'분노',hits:['dex','ins']},{k:'poisoned',n:'중독',hits:['mig','wlp']}
   ];
   var baseDie={dex:8,ins:8,mig:8,wlp:8};   // 프리셋에 저장되는 값
   var stepAdj={dex:0,ins:0,mig:0,wlp:0};   // ▲▼ 수동 버프·디버프 (저장 안 함)
@@ -344,8 +327,7 @@ footer{text-align:center;color:var(--fu-text-muted);font-size:11px;margin-top:va
     return Math.max(6,Math.min(12,v));
   }
   var d1=$('d1'),d2=$('d2'),bonus=$('bonus'),dl=$('dl'),
-      reroll=$('reroll'),bond=$('bond'),coop=$('coop'),
-      c1=$('c1'),c2=$('c2'),cbonus=$('cbonus');
+      reroll=$('reroll'),bond=$('bond');
 
   function out(i,j,bo){
     return { crit:(i===j&&i>=6), fumble:(i===1&&j===1), total:i+j+bo, hr:(i>j?i:j) };
@@ -418,7 +400,6 @@ footer{text-align:center;color:var(--fu-text-muted);font-size:11px;margin-top:va
   function build(cfg){
     var bo=cfg.bonus+cfg.bond;
     var A=playerDist(cfg.a,cfg.b,bo,cfg.dl,cfg.rr);
-    if(cfg.coop) A=combine(A,collapse(baseDist(cfg.ca,cfg.cb,cfg.cbonus)));
     return A;
   }
 
@@ -445,8 +426,7 @@ footer{text-align:center;color:var(--fu-text-muted);font-size:11px;margin-top:va
       a:+d1.value, b:+d2.value,
       bonus:parseInt(bonus.value,10)||0,
       dl:parseInt(dl.value,10),
-      rr:+reroll.value, bond:+bond.value, coop:coop.checked,
-      ca:+c1.value, cb:+c2.value, cbonus:parseInt(cbonus.value,10)||0
+      rr:+reroll.value, bond:+bond.value
     };
     if(isNaN(cfg.dl)) cfg.dl=10;
     if(over) for(var k in over) cfg[k]=over[k];
@@ -456,7 +436,7 @@ footer{text-align:center;color:var(--fu-text-muted);font-size:11px;margin-top:va
   function render(){
     var cfg=readCfg();
     var cur=stats(build(cfg),cfg.dl);
-    var plain=stats(build(readCfg({rr:0,bond:0,coop:false})),cfg.dl);
+    var plain=stats(build(readCfg({rr:0,bond:0})),cfg.dl);
 
     $('succ').textContent=pct(cur.p);
     $('odds').textContent='결과 상태 '+cur.states+'종';
@@ -470,10 +450,9 @@ footer{text-align:center;color:var(--fu-text-muted);font-size:11px;margin-top:va
       var s=stats(build(readCfg(over)),cfg.dl);
       lines+='<div class="dline"><span>'+label+'</span><span class="v">'+pct(s.p)+'</span>'+delta((s.p-plain.p)*100)+'</div>';
     }
-    if(cfg.rr>0) addLine('재굴림 '+cfg.rr+'개만',{bond:0,coop:false});
-    if(cfg.bond>0) addLine('인연 +'+cfg.bond+'만',{rr:0,coop:false});
-    if(cfg.coop) addLine('협력 판정만',{rr:0,bond:0});
-    if(cfg.rr>0||cfg.bond>0||cfg.coop)
+    if(cfg.rr>0) addLine('재굴림 '+cfg.rr+'개만',{bond:0});
+    if(cfg.bond>0) addLine('인연 +'+cfg.bond+'만',{rr:0});
+    if(cfg.rr>0||cfg.bond>0)
       lines+='<div class="dline"><span>현재 설정 전체</span><span class="v">'+pct(cur.p)+'</span>'+delta((cur.p-plain.p)*100)+'</div>';
     $('deltas').innerHTML=lines;
 
@@ -492,18 +471,16 @@ footer{text-align:center;color:var(--fu-text-muted);font-size:11px;margin-top:va
     $('dlrows').innerHTML=rows;
 
     var combos=[
-      {n:'자원 없음',o:{rr:0,bond:0,coop:false}},
-      {n:'재굴림 1개',o:{rr:1,bond:0,coop:false}},
-      {n:'재굴림 2개',o:{rr:2,bond:0,coop:false}},
-      {n:'인연 +'+(cfg.bond||3),o:{rr:0,bond:cfg.bond||3,coop:false}},
-      {n:'재굴림 2개 + 인연',o:{rr:2,bond:cfg.bond||3,coop:false}},
-      {n:'협력 판정',o:{rr:0,bond:0,coop:true}},
-      {n:'전부 사용',o:{rr:2,bond:cfg.bond||3,coop:true}}
+      {n:'자원 없음',o:{rr:0,bond:0}},
+      {n:'재굴림 1개',o:{rr:1,bond:0}},
+      {n:'재굴림 2개',o:{rr:2,bond:0}},
+      {n:'인연 +'+(cfg.bond||3),o:{rr:0,bond:cfg.bond||3}},
+      {n:'재굴림 2개 + 인연',o:{rr:2,bond:cfg.bond||3}}
     ];
     var tb='';
     combos.forEach(function(c){
       var s=stats(build(readCfg(c.o)),cfg.dl);
-      var same=(c.o.rr===cfg.rr&&c.o.bond===cfg.bond&&c.o.coop===cfg.coop);
+      var same=(c.o.rr===cfg.rr&&c.o.bond===cfg.bond);
       tb+='<tr'+(same?' class="cur"':'')+'><td>'+c.n+'</td>'
         +'<td>'+pct(s.p)+'</td><td>'+delta((s.p-plain.p)*100)+'</td>'
         +'<td>'+pct(s.crit)+'</td><td>'+pct(s.fumb)+'</td></tr>';
@@ -577,12 +554,10 @@ footer{text-align:center;color:var(--fu-text-muted);font-size:11px;margin-top:va
     drawAttrs(); render();
   });
 
-  coop.addEventListener('change',function(){
-    [c1,c2,cbonus].forEach(function(el){ el.disabled=!coop.checked; });
-    $('coopSwitch').classList.toggle('on',coop.checked);
+  (function(){
   });
 
-  [bonus,dl,reroll,bond,coop,c1,c2,cbonus].forEach(function(el){
+  [bonus,dl,reroll,bond].forEach(function(el){
     el.addEventListener('input',render);
     el.addEventListener('change',render);
   });
